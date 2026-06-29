@@ -1,0 +1,4122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>한화생명 - 상품 통합전시 캐러셀</title>
+<style>
+  @property --grad-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+  @keyframes spin-gradient {
+    to { --grad-angle: 360deg; }
+  }
+  @font-face{font-family:'HanwhaGothic';src:url('./font/04HanwhaGothicB_OTF.otf')format('opentype');font-weight:700}
+  @font-face{font-family:'HanwhaGothic';src:url('./font/05HanwhaGothicR_OTF.otf')format('opentype');font-weight:400}
+  @font-face{font-family:'HanwhaGothic';src:url('./font/06HanwhaGothicL_OTF.otf')format('opentype');font-weight:300}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #ffffff;
+    min-height: 100vh;
+    overflow-x: clip;
+  }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    color: #1a1a1a;
+    overflow-x: clip;
+    width: 100%;
+  }
+
+  /* =========================================================
+     GNB (Global Navigation Bar)
+     ---------------------------------------------------------
+     Rendered as an inline SVG at its intrinsic size (1128 × 101).
+     Centered in a 1280px max-width container, with 40px gap to
+     the carousel below.
+     ========================================================= */
+  /* gnb styles moved to section overrides */
+  .mobile-statusbar { display: none; }
+
+  /* =========================================================
+     SHINHAN-STYLE FLOW CAROUSEL
+     ---------------------------------------------------------
+     Every card uses the LARGE svg (424×348 footprint, 392×316 visual).
+     Side cards are scaled down to 274/392 = 0.6990 (matches small card spec).
+     Scaling anchored to visual center → cards expand along the X axis
+     without any vertical drift.
+
+     Spacing (14px between visual bodies):
+       large ↔ small : 392/2 + 14 + 274/2 = 347px   → slot ±1
+       small ↔ small : 274/2 + 14 + 274/2 = 288px   → slot ±2 absolute = 635
+     Visual center inside large SVG: rect (16,14) of 392×316 → (212, 172)
+     ========================================================= */
+
+  .carousel-section {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    margin: 48px 0 0;
+    height: 374px;
+    overflow: hidden;
+  }
+
+  .carousel-section::before,
+  .carousel-section::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 140px;
+    pointer-events: none;
+    z-index: 15;
+  }
+  .carousel-section::before {
+    left: 0;
+    background: linear-gradient(to right,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0) 100%);
+  }
+  .carousel-section::after {
+    right: 0;
+    background: linear-gradient(to left,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0) 100%);
+  }
+
+  .carousel-track {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+  }
+
+  .card {
+    position: absolute;
+    left: -226px;
+    top: -187px;
+    width: 452px;
+    height: 374px;
+    transform-origin: 226px 187px;
+    transition:
+      transform 700ms cubic-bezier(.22, .9, .28, 1),
+      opacity   500ms ease;
+    will-change: transform;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .card.is-center { z-index: 10; }
+
+  .card img {
+    display: block;
+    position: absolute;
+    left: 16px;
+    top: 14px;
+    width: 420px;
+    height: 346px;
+    border-radius: 26px;
+    pointer-events: none;
+  }
+
+  /* ----- Pagination ----- */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 18px;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #d4d4d4;
+    cursor: pointer;
+    transition: all 350ms ease;
+    border: none;
+    padding: 0;
+  }
+  .dot.active {
+    width: 22px;
+    border-radius: 999px;
+    background: #ff7a00;
+  }
+
+
+
+  /* =========================================================
+     MOBILE LAYOUT (≤ 768px)
+     ---------------------------------------------------------
+     - Only the center card visible
+     - 20px horizontal margin from viewport edges
+     - Card aspect ratio preserved (424:348 footprint)
+     ========================================================= */
+  @media (max-width: 768px) {
+    .carousel-section {
+      height: calc(374px * 0.8); /* 카드 전체 높이의 80% 고정 */
+      min-height: unset;
+    }
+    .carousel-section::before,
+    .carousel-section::after {
+      width: 20px;
+    }
+    .carousel-section::before,
+    .carousel-section::after {
+      background: transparent;
+    }
+    .card {
+      transition:
+        transform 600ms cubic-bezier(.22, .9, .28, 1),
+        opacity   400ms ease;
+    }
+  }
+
+  /* =========================================================
+     SEARCH BAR
+     ========================================================= */
+  .search-section {
+    width: 100%;
+    max-width: 1128px;
+    margin: 0 auto 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+  }
+  .search-box {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 360px;
+    border: 1.5px solid #FA6600;
+    border-radius: 32px;
+    padding: 14px 22px;
+    gap: 12px;
+    background: #fff;
+    transition: max-width 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .search-box:hover {
+    max-width: 560px;
+  }
+  .search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 18px;
+    color: #555;
+    background: transparent;
+    font-family: inherit;
+  }
+  .search-box input::placeholder { color: #bbb; }
+
+  /* =========================================================
+     PRODUCTS SECTION
+     ========================================================= */
+  .products-section {
+    width: 100%;
+    margin: 0;
+    padding: 90px 0;
+  }
+  .section-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111;
+    text-align: center;
+    margin-bottom: 28px;
+    letter-spacing: -0.5px;
+  }
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tab-icon-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .tab-icon-img {
+    width: 64px;
+    height: 64px;
+    display: block;
+    transition: filter 220ms ease;
+  }
+  .tab-icon-btn.active .tab-icon-img {
+    filter: drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.12));
+  }
+  .tab-icon-label {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 16px;
+    font-weight: 300;
+    color: #7e7c7a;
+    line-height: 1.5;
+    text-align: center;
+    white-space: nowrap;
+    transition: color 200ms ease, font-weight 200ms ease;
+  }
+  .tab-icon-btn.active .tab-icon-label {
+    font-weight: 400;
+    color: #272b2f;
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+  .product-card {
+    border: 1px solid #ebebeb;
+    border-radius: 16px;
+    padding: 26px 24px 22px;
+    background: #fff;
+  }
+  .card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #FFF3EC;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11.5px;
+    color: #FA6600;
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .card-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .card-desc {
+    font-size: 12.5px;
+    color: #999;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+  .card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 13px;
+    color: #FA6600;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  /* =========================================================
+     LIFETIP SECTION
+     ========================================================= */
+  .lifetip-section {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 1128px;
+    margin: 90px auto;
+    padding: 0;
+    gap: 101px;
+  }
+  .lifetip-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .lifetip-title {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: #272B2F;
+    line-height: 1.5;
+    margin: 0;
+    white-space: nowrap;
+  }
+  .lifetip-arrow { width: 20px; height: 20px; flex-shrink: 0; }
+  .lifetip-grid {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+    flex: 1;
+    gap: 24px;
+  }
+  .lifetip-card-wrap {
+    flex: 0 0 280px;
+    width: 280px;
+    background: #fff;
+    border: 1px solid #e5e4e3;
+    border-radius: 16px;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    cursor: pointer;
+    transition: transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 260ms ease;
+    box-sizing: border-box;
+  }
+  .lifetip-card-wrap:hover {
+    transform: scale(1.03);
+    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+  }
+  .lt-top {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+  }
+  .lt-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    background: #fff;
+    border: 1px solid #E5E4E3;
+    border-radius: 1000px;
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: #272B2F;
+    line-height: 1.4;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+  .lt-title {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #272b2f;
+    line-height: 1.5;
+    margin: 0;
+    width: 100%;
+  }
+  .lt-desc {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 16px;
+    font-weight: 300;
+    color: #7e7c7a;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .section-title-left {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 24px;
+    letter-spacing: -0.5px;
+  }
+
+  /* =========================================================
+     EVENTS SECTION
+     ========================================================= */
+  /* ── Contract Section ── */
+  .contract-section {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 1128px;
+    margin: 90px auto;
+    padding: 0;
+    gap: 111px;
+  }
+  .contract-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 129px;
+    min-width: 129px;
+    flex-shrink: 0;
+  }
+  .contract-title {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: #272B2F;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .contract-menu {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+    gap: 0;
+  }
+  .contract-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 20px;
+    transition: transform 260ms ease, box-shadow 260ms ease;
+  }
+  .contract-menu-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+  }
+  .contract-menu-item img {
+    width: 100px;
+    height: 107px;
+    border-radius: 20px;
+  }
+
+  .events-section {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 1128px;
+    margin: 90px auto 90px;
+    padding: 0;
+  }
+  .event-banners {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1;
+    gap: 20px;
+  }
+  .event-banner-img {
+    height: auto;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 260ms ease;
+  }
+  .event-banner-img:hover {
+    transform: scale(1.03);
+    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+  }
+
+  /* ── Notice + QR Section ── */
+  .notice-section {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 1128px;
+    margin: 90px auto 90px;
+    justify-content: space-between;
+  }
+  .notice-left {
+    width: 520px;
+    flex-shrink: 0;
+  }
+  .notice-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .notice-title {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: #272B2F;
+    line-height: 1.5;
+  }
+  .notice-more {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 16px;
+    font-weight: 300;
+    color: #272B2F;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .notice-more img { width: 20px; height: 20px; }
+  .notice-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .notice-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    cursor: pointer;
+    gap: 12px;
+  }
+  .notice-item a {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 18px;
+    font-weight: 300;
+    color: #272B2F;
+    text-decoration: none;
+    line-height: 1.5;
+    flex: 1;
+    min-width: 0;
+  }
+  .notice-item img { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.5; transition: opacity 200ms ease, filter 200ms ease; }
+  .notice-item:hover a { color: #FA6600; transition: color 200ms ease; }
+  .notice-item:hover img { opacity: 1; filter: brightness(0) saturate(100%) invert(43%) sepia(97%) saturate(1400%) hue-rotate(10deg) brightness(103%); }
+  .qr-box {
+    flex-shrink: 0;
+    width: 457px;
+    background: #F5F5F5;
+    border-radius: 20px;
+    padding: 32px 36px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+  .qr-box-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .qr-box-title {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #272B2F;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  .qr-box-desc {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: #5E5C5A;
+    line-height: 1.7;
+  }
+  .qr-code-wrap {
+    flex-shrink: 0;
+    width: 112px;
+    height: 112px;
+    background: #fff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .qr-code-wrap svg { width: 96px; height: 96px; }
+
+
+/* ── SVG section overrides ── */
+.mobile-header { display: none; }
+
+/* ── Utility Bar (gnb_sub) ── */
+.gnb-sub{width:100%;background:#fff;border-bottom:1px solid #f0eeec;}
+.gnb-sub img{display:block;width:1128px;max-width:100%;height:auto;margin:0 auto;}
+.gnb-main {
+  width: 100%;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: box-shadow 200ms ease;
+}
+.gnb-main-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1128px;
+  height: 68px;
+  margin: 0 auto;
+}
+.gnb-logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+.gnb-logo img {
+  height: 36px;
+  width: auto;
+  display: block;
+}
+.gnb-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 48px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.gnb-menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 68px;
+}
+.gnb-menu-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #F37321;
+  transition: width 220ms ease;
+}
+.gnb-menu-item:hover::after {
+  width: 100%;
+}
+.gnb-menu-item > a {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  color: #272B2F;
+  text-decoration: none;
+  white-space: nowrap;
+  display: block;
+  transition: color 200ms ease;
+}
+.gnb-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.gnb-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: #272B2F;
+  transition: color 200ms ease;
+}
+.gnb-icon-btn:hover {
+  color: #F37321;
+}
+
+/* ── Mega Menu ── */
+.gnb-main-wrap {
+  position: relative;
+  width: 100%;
+}
+.gnb-mega {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  pointer-events: none;
+  clip-path: inset(0 0 101% 0);
+  transition: clip-path 1200ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 200;
+  overflow: hidden;
+}
+.gnb-mega--auto {
+  height: auto;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  padding-bottom: 52px;
+}
+.gnb-mega-row-divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: #E5E5E5;
+  margin: 32px 0;
+}
+.gnb-l2-list li a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.gnb-l2-sub-icon {
+  flex-shrink: 0;
+  opacity: 0.45;
+}
+.gnb-mega.open {
+  pointer-events: auto;
+  clip-path: inset(0 0 0% 0);
+}
+.gnb-dim-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+  z-index: 99;
+}
+.gnb-dim-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.gnb-mega-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1128px;
+  margin: 0 auto;
+  padding: 60px 0 100px;
+  gap: 0;
+}
+.gnb-mega-bottom-line {
+  height: 1px;
+  background: #E5E5E5;
+  margin-top: 52px;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+.gnb-mega-cols {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0 24px;
+  width: 100%;
+  align-items: start;
+}
+.gnb-l2-group {
+  min-width: 0;
+  width: 100%;
+}
+.gnb-l2-cat {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  color: #272B2F;
+  margin: 0 0 16px 0;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  display: block;
+}
+.gnb-l2-list + .gnb-l2-cat,
+.gnb-l2-cat + .gnb-l2-cat {
+  margin-top: 24px;
+}
+.gnb-l2-cat a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #272B2F;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+.gnb-l2-cat a:hover {
+  color: #FA6600;
+}
+.gnb-l2-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gnb-l2-list li a {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 150%;
+  color: #5E5C5A;
+  text-decoration: none;
+}
+.gnb-mega-finder {
+  margin-top: 28px;
+  padding-top: 28px;
+  border-top: 1px solid #E5E5E5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.gnb-product-text-btns {
+  display: flex;
+  align-items: flex-start;
+  gap: 60px;
+}
+.gnb-text-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.gnb-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #272B2F;
+  text-decoration: none;
+}
+.gnb-text-btn:hover {
+  color: #FA6600;
+}
+.gnb-text-btn-group p {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.4;
+  color: #5E5C5A;
+  margin: 0;
+}
+.gnb-banner-wrap {
+  flex-shrink: 0;
+  position: relative;
+}
+.gnb-banner-track {
+  position: relative;
+  width: 364px;
+  height: 110px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.gnb-banner-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+.gnb-banner-bg.active { opacity: 1; }
+.gnb-banner-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.gnb-l2-list li a:hover {
+  color: #FA6600;
+  text-decoration: none;
+}
+
+/* ── Product Chips ── */
+.products-section { margin-top: 45px; padding: 45px 0 90px; background: #fbfbfb; }
+.products-section .section-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 auto 48px;
+  max-width: 1128px;
+  padding: 0;
+  text-align: center;
+}
+.product-chips {
+  display: flex;
+  gap: 8px;
+  max-width: 1128px;
+  margin: 0 auto 48px;
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #7e7c7a;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.5;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 200ms ease;
+}
+.chip .chip-ico {
+  width: 64px;
+  height: 64px;
+  display: block;
+  transition: filter 200ms ease;
+}
+.chip-text {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+.chip-text::after {
+  content: none;
+}
+.chip.active,
+.chip:hover {
+  color: #272b2f;
+}
+.chip.active .chip-ico,
+.chip:hover .chip-ico {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.10));
+}
+.product-content .tab-panel { display: none; }
+.product-content .tab-panel.active { display: block; }
+.tab-placeholder {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-size: 15px;
+  border: 2px dashed #e8e8e8;
+  border-radius: 16px;
+  margin: 0;
+}
+@media (max-width: 768px) {
+  .products-section .section-title { font-size: 18px; }
+  .product-chips { gap: 6px; padding: 0 16px; }
+  .chip { font-size: 14px; gap: 6px; }
+  .chip .chip-ico { width: 56px; height: 56px; }
+}
+
+
+/* ── product sections (그룹 타이틀 + 카드 그리드) ── */
+.product-section {
+  max-width: 1128px;
+  margin: 0 auto;
+}
+.product-section + .product-section {
+  margin-top: 70px;
+}
+.product-section-title {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #403f3e;
+  line-height: 1.5;
+  margin: 0 0 32px;
+  text-align: left;
+}
+.product-section .in-card-grid {
+  padding: 0;
+  margin: 0;
+}
+
+/* ── in_card grid & hover ── */
+.in-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 360px);
+  gap: 24px;
+  max-width: 1128px;
+  margin: 0 auto;
+  padding: 0 0 48px;
+}
+.in-card {
+  display: block;
+  width: 360px;
+  height: 215px;
+  border-radius: 15.5px;
+  cursor: pointer;
+  will-change: transform;
+  transform-origin: center center;
+  transition:
+    transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 260ms ease;
+}
+.in-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+}
+@media (max-width: 768px) {
+  .in-card-grid {
+    grid-template-columns: 1fr;
+    padding: 0 16px 32px;
+  }
+}
+
+/* ── Section Divider ── */
+.section-divider {
+  display: flex;
+  width: 1128px;
+  min-height: 1px;
+  max-height: 1px;
+  flex-direction: column;
+  align-items: flex-start;
+  background: #E5E5E5;
+  margin: 90px auto;
+}
+
+/* ── Banner section (배너) ── */
+.banner-section {
+  max-width: 1128px;
+  margin: 90px auto;
+  padding: 0;
+}
+.banner-card {
+  width: 100%;
+  height: 100px;
+  background: #E8EFF5;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 260ms ease;
+}
+.banner-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.banner-img {
+  display: block;
+  height: 80px;
+  width: auto;
+}
+
+/* ── Product title ── */
+.product-title-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  max-width: 1128px;
+  margin: 0 auto;
+  padding: 24px 0;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  background: #fff;
+}
+.product-title-wrap::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  background: #fff;
+  z-index: -1;
+  box-shadow: 0 0 0 rgba(0,0,0,0);
+  clip-path: inset(0 -40px -40px -40px);
+  transition: box-shadow 220ms ease;
+}
+.product-title-wrap.is-stuck::before {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+.m-br { display: none; }
+.product-title-name {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #403F3E;
+  text-align: center;
+  white-space: nowrap;
+  margin: 0;
+  transition: opacity 520ms ease, font-size 220ms ease;
+}
+.product-title-wrap.is-shrinking .product-title-name,
+.product-title-wrap.is-stuck .product-title-name {
+  font-size: 30px;
+}
+.product-title-wrap.search-open .product-title-name {
+  opacity: 0;
+  pointer-events: none;
+}
+.product-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto 48px;
+  max-width: 1128px;
+}
+
+/* ── Tab + Search Integration ── */
+.tab-search-wrap {
+  position: relative;
+  max-width: 1128px;
+  margin: 0 auto 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+}
+.tsw-chips {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  align-items: flex-start;
+  justify-content: center;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+/* 검색 영역 컨테이너: 제목 옆에 인라인으로 배치, 확장 시 expand-row가 좌측으로 확장됨 */
+.tsw-search-area {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  z-index: 5;
+  cursor: pointer;
+}
+.tsw-search-area.open { cursor: default; }
+
+/* 기본 상태: 검색 아이콘 원형 버튼 */
+.tsw-trigger-wrap {
+  position: absolute;
+  inset: 0;
+  width: 60px;
+  height: 60px;
+  pointer-events: none;
+}
+.tsw-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 360ms ease, transform 360ms ease;
+  z-index: 10;
+  white-space: nowrap;
+}
+.tsw-tooltip.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.tsw-search-trigger {
+  position: absolute;
+  inset: 0;
+  width: 60px;
+  height: 60px;
+  border: 1.6px solid #403f3e;
+  border-radius: 1000px;
+  background: #fff;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #403f3e;
+  flex-shrink: 0;
+  z-index: 2;
+  pointer-events: auto;
+  transition: opacity 520ms ease, transform 520ms ease, color 200ms ease, border-color 200ms ease;
+}
+.tsw-search-trigger:hover {
+  color: #FA6600;
+  border-color: #FA6600;
+}
+.tsw-search-area.open .tsw-search-trigger {
+  opacity: 0;
+  transform: scale(0.75);
+  pointer-events: none;
+}
+
+/* 확장 pill row: 중앙위치 고정 + opacity crossfade (위치 변경은 무애니메이션 → 튕김 방지) */
+.tsw-expand-row {
+  position: absolute;
+  right: var(--tsw-open-right, 0px);
+  top: 0;
+  height: 60px;
+  width: var(--tsw-open-w, 60px);
+  overflow: visible;
+  background: transparent;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 520ms ease, visibility 0s linear 520ms;
+}
+.tsw-search-area.open .tsw-expand-row {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 520ms ease, visibility 0s linear 0s;
+}
+
+/* pill 등장 애니메이션 */
+@keyframes pillReveal {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.tsw-search-area.open .tsw-pill {
+  animation: pillReveal 220ms cubic-bezier(0.34, 1.3, 0.64, 1) both;
+}
+.tsw-search-area.open .tsw-consult-pill { animation-delay: 0ms; }
+.tsw-search-area.open .tsw-filter-pill  { animation-delay: 30ms; }
+.tsw-search-area.open .tsw-input-pill   { animation-delay: 60ms; }
+.tsw-search-area.open .tsw-back-pill    { animation-delay: 90ms; }
+
+/* 실제 pill flex row: 오른쪽 정렬 → 우측부터 reveal */
+.tsw-expand-inner {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  height: 60px;
+}
+
+/* 공통 pill 스타일 */
+.tsw-pill {
+  height: 60px;
+  border: 1.6px solid #403f3e;
+  border-radius: 1000px;
+  background: #fff;
+  opacity: 0; /* 닫힌 상태에서 숨김 — open 시 pillReveal 애니메이션이 복원 */
+  box-shadow: none;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 18px;
+  font-weight: 300;
+  color: #403f3e;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 200ms ease, border-color 200ms ease;
+}
+.tsw-pill:hover { color: #FA6600; border-color: #FA6600; }
+
+/* 뒤로가기/닫기 버튼 (원형) */
+.tsw-back-pill {
+  width: 60px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* 검색 입력 pill */
+.tsw-input-pill {
+  width: 470px;
+  justify-content: space-between;
+  cursor: default;
+}
+.tsw-input-pill:hover { box-shadow: none; color: #403f3e; border-color: #403f3e; }
+.tsw-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 18px;
+  font-weight: 300;
+  color: #272B2F;
+}
+.tsw-search-input::placeholder { color: #908F8E; }
+.tsw-search-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #272B2F;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+/* ── Carousel Indicator ── */
+.carousel-indicator {
+  display: flex;
+  padding: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  border-radius: 1000px;
+  background: #F5F5F5;
+  width: 124px;
+  height: 40px;
+  box-sizing: border-box;
+  margin: 20px auto 45px;
+}
+.ind-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  flex-shrink: 0;
+  transition: opacity 150ms ease;
+}
+.ind-btn:hover { opacity: 0.55; }
+.ind-btn img,
+.ind-btn svg { display: block; width: 20px; height: 20px; }
+.ind-counter {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 14px;
+  font-weight: 300;
+  color: #BFBEBC;
+  line-height: 1;
+}
+.ind-counter strong {
+  color: #272B2F;
+  font-weight: 700;
+}
+.ind-sep {
+  color: #D9D9D9;
+  font-weight: 300;
+}
+
+  .tab-panel {
+    display: none;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .tab-panel.active {
+    display: block;
+    animation: panelIn 350ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .card-modal-overlay.open {
+    display: flex;
+    animation: overlayIn 250ms ease forwards;
+  }
+  @keyframes overlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .card-modal {
+    position: relative;
+    border-radius: 32px;
+    overflow: hidden;
+    animation: modalIn 350ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    cursor: pointer;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.82); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .card-modal img { display: block; width: 560px; max-width: 90vw; height: auto; border-radius: 32px; }
+  .card-modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.35);
+    color: #fff;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+
+  .lifetip-track {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px;
+    cursor: grab;
+    scrollbar-width: none;
+  }
+  .lifetip-track::-webkit-scrollbar { display: none; }
+  .lifetip-track.grabbing { cursor: grabbing; }
+  .lifetip-card {
+    flex: 0 0 280px;
+    scroll-snap-align: start;
+    background: #F8F8F8;
+    border-radius: 20px;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: transform 250ms ease, box-shadow 250ms ease;
+  }
+  .lifetip-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.10);
+  }
+  .lt-tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #FA6600;
+    background: rgba(250,102,0,0.10);
+    border-radius: 999px;
+    padding: 4px 12px;
+    width: fit-content;
+  }
+  .lt-title {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 22px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 150%;
+    color: #272B2F;
+  }
+  .lt-desc {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
+    color: #7E7C7A;
+  }
+
+/* ════════════════════════════════════════════
+   모바일 상품 카드 (텍스트형)
+════════════════════════════════════════════ */
+.product-list { display: none; }
+.product-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid #F0F0F0;
+}
+.product-card:last-child { border-bottom: none; }
+.product-card-info { flex: 1; min-width: 0; }
+.product-cat {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #908F8E;
+  display: block;
+  margin-bottom: 4px;
+}
+.product-name {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #272B2F;
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+.product-desc {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  color: #5E5C5A;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-cta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.product-cta-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #FA6600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.product-cta-icon svg { display: block; }
+.product-cta-label {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #5E5C5A;
+  white-space: nowrap;
+}
+
+/* ════════════════════════════════════════════
+   바텀 네비 — 데스크톱 숨김
+════════════════════════════════════════════ */
+#app-nav { display: none; }
+
+/* ── Footer ── */
+.site-footer { display: flex; justify-content: center; line-height: 0; overflow: hidden; }
+.site-footer img { display: block; width: auto; height: auto; flex-shrink: 0; }
+
+/* ════════════════════════════════════════════
+   MOBILE (≤768px)
+════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── GNB 숨김 ── */
+  .gnb-main, .gnb-sub, .gnb-dim-overlay, .gnb-mega {
+    display: none !important;
+  }
+
+  /* ── 모바일 헤더 ── */
+  .mobile-statusbar {
+    display: block;
+    line-height: 0;
+  }
+  .mobile-statusbar img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .mobile-header {
+    display: block;
+    line-height: 0;
+  }
+  .mobile-header img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* ── Footer 숨김 ── */
+  .site-footer { display: none; }
+
+  /* ── body ── */
+  body { padding-bottom: 86px; }
+
+  /* ── 바텀 네비 ── */
+  #app-nav {
+    display: block !important;
+    position: fixed;
+    bottom: 0; left: 0;
+    width: 100%;
+    z-index: 9999;
+    line-height: 0;
+    transform: translateY(0);
+    transition: transform 320ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #app-nav.nav-hidden { transform: translateY(100%); }
+  #app-nav img { width: 100%; height: auto; display: block; }
+
+  /* ── 공통: 20px 좌우 마진 ── */
+  .product-title-wrap,
+  .search-section,
+  .contract-section,
+  .lifetip-section,
+  .events-section {
+    box-sizing: border-box;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* ── 섹션 간격 ── */
+  .carousel-section   { margin-top: 24px; }
+  .contract-section   { margin-top: 70px; }
+  .lifetip-section    { margin-top: 70px; }
+  .events-section     { margin-top: 70px; margin-bottom: 70px; }
+
+  /* ── product-title (모바일: PC와 동일하게 row + 검색 트리거 인라인) ── */
+  .carousel-indicator { margin-bottom: 20px; }
+  .product-title-wrap { position: relative; top: auto; z-index: auto; flex-direction: row; align-items: center; justify-content: center; text-align: center; padding: 80px 20px; margin: 0; gap: 28px; min-height: auto; background: transparent; }
+  .product-title-wrap::before { display: none; }
+  .product-title-name { font-size: 22px; font-weight: 700; text-align: left; white-space: normal; line-height: 1.5; }
+  .product-title-wrap.search-open .product-title-name { opacity: 0; pointer-events: none; }
+  .m-br { display: inline; }
+
+  /* ── 검색 (탭 통합형) ── */
+  .tab-search-wrap { flex-direction: column; align-items: stretch; gap: 0; min-height: auto; padding: 0 20px; margin-bottom: 28px; }
+  .tsw-chips { overflow-x: auto; flex-wrap: nowrap; justify-content: flex-start; gap: 20px; margin: 0 -20px; padding: 0 20px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .tsw-chips::-webkit-scrollbar { display: none; }
+  /* 검색 열림 시 영역 전체를 contents area 폭으로 펼침 (제목 숨김) */
+  .product-title-wrap.search-open .tsw-search-area {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    right: 20px;
+    transform: translateY(-50%);
+    width: auto;
+    height: 60px;
+  }
+  .product-title-wrap.search-open .tsw-search-area.open .tsw-expand-row {
+    width: 100% !important;
+    right: 0 !important;
+  }
+  .product-title-wrap.search-open .tsw-search-area.open .tsw-expand-inner {
+    left: 0;
+    right: 0;
+  }
+  .tsw-pill { font-size: 16px; padding: 0 14px; }
+  .tsw-input-pill { width: auto; flex: 1; min-width: 0; }
+  .tsw-search-input { font-size: 16px; }
+  .tsw-filter-pill, .tsw-consult-pill { width: 60px; aspect-ratio: 1 / 1; padding: 0; justify-content: center; flex-shrink: 0; }
+  .tsw-back-pill { width: 60px; aspect-ratio: 1 / 1; padding: 0; justify-content: center; flex-shrink: 0; }
+  .tsw-filter-pill svg, .tsw-consult-pill svg, .tsw-back-pill svg { width: 28px; height: 28px; flex-shrink: 0; }
+  .tsw-pill-text { display: none; }
+  .tsw-expand-inner { gap: 8px; }
+
+  /* ── 칩스: 좌측 20px, 우측 오픈 스크롤 ── */
+  .products-section { padding: 48px 0; max-width: 100%; overflow-x: hidden; }
+  .fn-card:hover { transform: none; box-shadow: none; }
+  .product-chips-wrap {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    margin: 0 0 24px;
+    max-width: 100%;
+    padding-left: 20px;
+    padding-right: 20px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .product-chips-wrap::-webkit-scrollbar { display: none; }
+  .chip { white-space: nowrap; flex-shrink: 0; }
+
+  /* ── 상품 카드: SVG 1열 축소 ── */
+  .product-list { display: none !important; }
+  .product-section { padding: 0 20px; }
+  .product-section + .product-section { margin-top: 48px; }
+  .product-section-title { font-size: 22px; margin-bottom: 20px; }
+  .in-card-grid {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 20px;
+  }
+  .product-section .in-card-grid { padding: 0; }
+  .in-card { width: 100%; height: auto; }
+  .fn-card { width: 100%; padding: 24px; min-height: 220px; }
+  .fn-card-header { gap: 20px; }
+  .fn-card-name { font-size: 16px; }
+  .fn-card-sub { font-size: 12px; }
+  .fn-card-cta { margin-top: 20px; gap: 16px; }
+  .fn-card-cta-text { font-size: 16px; }
+  .banner-section { padding: 0 20px; margin: 48px auto; }
+  .banner-card { height: 80px; border-radius: 12px; }
+  .banner-img { height: 60px; }
+
+  /* ── 계약관리 ── */
+  .contract-section { flex-direction: column; align-items: flex-start; }
+  .contract-left {
+    width: 100%;
+    margin-bottom: 28px;
+  }
+  .contract-menu {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    justify-items: center;
+    gap: 24px;
+    width: 100%;
+  }
+  .contract-menu-item img { width: 100%; height: auto; }
+
+  /* ── 라이프팁 ── */
+  .lifetip-section { flex-direction: column; align-items: flex-start; }
+  .lifetip-left {
+    width: auto;
+    margin-bottom: 28px;
+  }
+  .lifetip-grid {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 20px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-left: -20px;
+    margin-top: -16px;
+    margin-bottom: -16px;
+    padding: 16px 20px;
+    width: calc(100% + 20px);
+  }
+  .lifetip-grid::-webkit-scrollbar { display: none; }
+  .lifetip-card-wrap { flex: none; width: 72vw; max-width: 284px; padding: 24px 20px; gap: 20px; }
+
+  /* ── 이벤트 ── */
+  .events-section { flex-direction: column; align-items: flex-start; }
+  .event-banners {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    width: 100%;
+    gap: 12px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-left: -20px;
+    padding-left: 20px;
+    width: calc(100% + 20px);
+  }
+  .event-banners::-webkit-scrollbar { display: none; }
+  .event-banner-img { flex-shrink: 0; width: 80vw; max-width: 320px; }
+
+  /* ── 공지사항 + QR ── */
+  .notice-section { flex-direction: column; align-items: flex-start; gap: 28px; justify-content: flex-start; padding: 0 20px; }
+  .notice-left { width: 100%; }
+  .qr-box { display: none; }
+
+  /* ── 구분선 ── */
+  .section-divider { width: calc(100% - 40px); margin-left: 20px; margin-right: 20px; }
+  .section-divider--before-contract { display: none; }
+}
+
+/* ══════════════════════════════════════════
+   DEVICE DEMO OVERLAY
+══════════════════════════════════════════ */
+.device-demo-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #272B2F;
+  z-index: 9000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+.device-demo-overlay.active {
+  display: flex;
+  animation: deviceFadeIn 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes deviceFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.device-exit-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 100px;
+  padding: 10px 20px;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background 200ms ease, color 200ms ease;
+}
+.device-exit-btn:hover {
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+}
+.device-shell {
+  background: #1C1C1E;
+  border-radius: 52px;
+  padding: 13px;
+  box-shadow:
+    0 0 0 1.5px #3A3A3C,
+    0 0 0 3.5px #1C1C1E,
+    0 40px 100px rgba(0,0,0,0.7);
+  animation: deviceSlideUp 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes deviceSlideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+.device-screen-wrap {
+  width: 390px;
+  height: calc(100vh - 80px);
+  max-height: 1100px;
+  border-radius: 42px;
+  overflow: hidden;
+  background: #fff;
+  position: relative;
+}
+.device-screen-wrap iframe {
+  width: 390px;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* iframe 내부 스크롤바 숨김 (모든 브라우저 대응) */
+html.in-iframe {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overflow-x: hidden;
+}
+html.in-iframe::-webkit-scrollbar { display: none; width: 0; height: 0; }
+html.in-iframe body { overflow-x: hidden; width: 100%; }
+
+/* qr-box 클릭 커서 */
+.qr-box { cursor: pointer; }
+
+/* ── PC 상품카드 (Figma fn_card 스타일) ── */
+.fn-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 260ms ease;
+  width: 360px;
+  min-height: 244px;
+  box-sizing: border-box;
+  box-shadow: 0 5px 4px rgba(0,0,0,0.02);
+}
+.fn-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+}
+/* 강조 카드 콘텐츠 전환 애니메이션 */
+@keyframes offering-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.offering-switching .fn-card-header,
+.offering-switching .fn-card-monthly {
+  animation: offering-fade-in 0.28s ease forwards;
+}
+
+/* 강조 카드: 회전 그라데이션 아웃라인 */
+.fn-card--highlight {
+  position: relative;
+  z-index: 0;
+  background: transparent;
+  box-shadow: 0px 2px 8px rgba(255, 102, 0, 0.3);
+}
+.fn-card--highlight::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 19px;
+  background: conic-gradient(
+    from var(--grad-angle),
+    #fa6600 0%,
+    rgba(255,255,255,0.05) 5%,
+    #fa6600 11%,
+    #e879f9 28%,
+    #a78bfa 45%,
+    #6C7CEA 60%,
+    #a78bfa 75%,
+    #fa6600 100%
+  );
+  filter: blur(1.5px);
+  z-index: -2;
+  animation: spin-gradient 3s linear infinite;
+}
+.fn-card--highlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: #fff;
+  z-index: -1;
+}
+.fn-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.fn-card-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fn-card-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
+}
+/* 카테고리 레이블 (좌측 텍스트) */
+.fn-card-badge {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  color: #7e7c7a;
+  line-height: 1.5;
+  flex: 1;
+  min-width: 0;
+}
+/* 우측 칩 그룹 */
+.fn-card-chips {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+/* 뱃지 칩 (기본: 회색 아웃라인) */
+.fn-card-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  padding: 4px 8px;
+  border-radius: 1000px;
+  border: 1px solid #e5e4e3;
+  background: transparent;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: #272b2f;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+/* 상태 칩 (신상품, 추천 등): 오렌지 아웃라인 */
+.fn-card-chip--new,
+.fn-card-chip--hot,
+.fn-card-chip--rec {
+  border-color: #ffc299;
+  color: #fa6600;
+}
+/* 펀드 유형 메타 텍스트 */
+.fn-card-meta {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: #5e5c5a;
+  line-height: 1.4;
+  margin: 0;
+}
+/* 하위 호환 */
+.fn-card-badge--finance {
+  color: #7e7c7a;
+}
+.fn-card-sub {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: #5e5c5a;
+  line-height: 1.5;
+  margin: 0;
+}
+.fn-card-name {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #272b2f;
+  line-height: 1.5;
+  margin: 0;
+}
+.fn-card-cta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.fn-card-cta--split {
+  justify-content: space-between;
+}
+.fn-card-cta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.fn-card-cta-text {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  color: #403f3e;
+  line-height: 1.5;
+}
+/* 수익률 표시 (펀드 카드) */
+.fn-card-return {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.fn-card-return-label {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: #7e7c7a;
+  line-height: 1.4;
+}
+.fn-card-return-value {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.fn-card-return-value--neg { color: #2c4390; }
+.fn-card-return-value--pos { color: #f53f3f; }
+/* 월 보험료 표시 (추천 카드) */
+.fn-card-monthly {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.fn-card-monthly-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fn-card-monthly-label {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  color: #272b2f;
+  line-height: 1.5;
+}
+.fn-card-monthly-value {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: #272b2f;
+  line-height: 1.5;
+}
+.fn-card-monthly-caption {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: #7e7c7a;
+  line-height: 1.4;
+}
+
+/* ── 새 상품 섹션 (피그마 v2: 2패널 레이아웃) ── */
+.products-new-wrap {
+  width: 100%;
+  background: #F5F5F5;
+  padding: 90px 0;
+}
+.products-new {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1128px;
+  margin: 0 auto;
+  padding: 0;
+  gap: 93px;
+}
+.products-new-left {
+  width: 303px;
+  min-width: 303px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  position: sticky;
+  top: 24px;
+  align-self: flex-start;
+}
+.products-new-title {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: #272B2F;
+  line-height: 1.5;
+  margin: 0;
+}
+.products-cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+.products-cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 1000px;
+  background: #fff;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  color: #272B2F;
+  white-space: nowrap;
+  text-align: left;
+  transition: box-shadow 220ms ease, border-color 220ms ease;
+}
+.products-cat-btn.active {
+  gap: 12px;
+  border-color: #fa6600;
+  box-shadow: 0 5px 4px rgba(0,0,0,0.02);
+}
+.pcat-ico {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+.pcat-arrow-wrap {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.products-cat-btn:not(.active) .pcat-arrow-wrap { display: none; }
+.ins-card-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 360px);
+  gap: 12px;
+  align-items: start;
+}
+.ins-panel {
+  display: contents;
+}
+@media (max-width: 768px) {
+  .products-new-wrap { padding: 48px 0; }
+  .products-new {
+    flex-direction: column;
+    gap: 32px;
+    padding: 0 20px;
+  }
+  .products-new-left { width: 100%; min-width: unset; position: static; }
+  .products-new-title { font-size: 26px; }
+  .products-cat-list { flex-direction: row; overflow-x: auto; flex-wrap: nowrap; gap: 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .products-cat-list::-webkit-scrollbar { display: none; }
+  .products-cat-btn { font-size: 15px; padding: 10px 16px; flex-shrink: 0; }
+  .ins-card-grid { grid-template-columns: 1fr; gap: 16px; }
+}
+
+/* ── GNB L3 accordion & L4 list ── */
+.gnb-l3-group{margin-top:12px;}
+.gnb-l3-group:first-of-type{margin-top:0;}
+.gnb-l2-list + .gnb-l3-group{margin-top:12px;}
+.gnb-l3-group + .gnb-l2-list{margin-top:12px;}
+.gnb-l3-cat{
+  font-family:'HanwhaGothic','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  font-size:16px;font-weight:300;color:#5E5C5A;line-height:150%;
+  margin:0;display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;user-select:none;padding:0;gap:6px;
+  transition:color 180ms ease;word-break:keep-all;
+}
+.gnb-l3-cat .l3-chev{
+  flex-shrink:0;width:16px;height:16px;color:#8C8A88;
+  transition:transform 220ms ease, color 180ms ease;
+}
+.gnb-l3-group.open .gnb-l3-cat{color:#FA6600;}
+.gnb-l3-group.open .l3-chev{transform:rotate(180deg);color:#FA6600;}
+.gnb-l4-list{
+  list-style:none;margin:8px 0 0;padding:0;
+  display:none;flex-direction:column;gap:12px;
+  background:none;
+}
+.gnb-l3-group.open .gnb-l4-list{display:flex;}
+.gnb-l4-list li a{
+  font-family:'HanwhaGothic','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  font-size:16px;font-weight:300;line-height:150%;
+  color:#5E5C5A;text-decoration:none;word-break:keep-all;
+}
+.gnb-l4-list li a:hover{color:#FA6600;}
+/* 전체상품 보기 버튼 */
+.gnb-allproducts-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'HanwhaGothic','Apple SD Gothic Neo',sans-serif;
+  font-size:14px;font-weight:700;color:#272B2F;
+  text-decoration:none;padding:8px 14px;
+  background:#F5F4F2;border-radius:8px;margin-bottom:12px;
+  transition:background 180ms ease, color 180ms ease;
+}
+.gnb-allproducts-btn:hover{background:#FEE9D9;color:#FA6600;}
+/* mega cols variants */
+.gnb-mega-cols--3{grid-template-columns:repeat(3,1fr);}
+.gnb-mega-cols--2{grid-template-columns:repeat(2,minmax(0,480px));}
+/* Finder links */
+.gnb-finder-link{
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:'HanwhaGothic','Apple SD Gothic Neo',sans-serif;
+  font-size:18px;font-weight:700;line-height:1.5;
+  color:#272B2F;text-decoration:none;
+}
+.gnb-finder-link:hover{color:#FA6600;}
+
+</style>
+</head>
+<body>
+
+<div class="mobile-statusbar">
+  <img src="./svg/statusBar.svg" alt="">
+</div>
+<div class="mobile-header">
+  <img src="./svg/header/default.svg" alt="한화생명">
+</div>
+<div class="gnb-dim-overlay" id="gnbDimOverlay"></div>
+<!-- Utility Bar (gnb_sub) -->
+<div class="gnb-sub">
+  <img src="./svg/gnb_sub.svg" alt="">
+</div>
+<div class="gnb-main">
+  <div class="gnb-main-wrap">
+    <nav class="gnb-main-inner">
+      <a class="gnb-logo" href="./main.html">
+        <img src="./svg/CI.svg" alt="한화생명">
+      </a>
+      <ul class="gnb-menu">
+        <li class="gnb-menu-item" id="gnb-mycontract-item"><a href="#">나의계약</a></li>
+        <li class="gnb-menu-item" id="gnb-product-item"><a href="#">보험상품</a></li>
+        <li class="gnb-menu-item" id="gnb-finance-item"><a href="#">금융상품</a></li>
+        <li class="gnb-menu-item" id="gnb-benefits-item"><a href="#">혜택·정보</a></li>
+        <li class="gnb-menu-item" id="gnb-consumer-item"><a href="#">소비자포털</a></li>
+      </ul>
+      <div class="gnb-actions">
+        <button class="gnb-icon-btn" aria-label="검색">
+          <img src="./svg/28/search.svg" width="28" height="28" alt="검색">
+        </button>
+        <button class="gnb-icon-btn" id="gnb-login-btn" aria-label="도움말">
+          <img src="./svg/28/help.svg" width="28" height="28" alt="도움말">
+        </button>
+        <button class="gnb-icon-btn" aria-label="전체메뉴">
+          <img src="./svg/28/menu-line.svg" width="28" height="28" alt="전체메뉴">
+        </button>
+      </div>
+    </nav>
+    <!-- ══════════════════════════════════════════
+         MEGA: 나의 계약
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega gnb-mega--auto" id="gnbMegaMyContract">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+
+          <!-- 보험관리 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">보험관리</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">보험계약 정보</a></li>
+              <li><a href="#">보험금 신청</a></li>
+              <li><a href="#">일반보험금 신청</a></li>
+              <li><a href="#">자동화 등록</a></li>
+              <li><a href="#">보험료 납입</a></li>
+              <li><a href="#">계좌 신청/변경</a></li>
+              <li><a href="#">보험청약 관리</a></li>
+              <li><a href="#">보험계약 변경</a></li>
+              <li><a href="#">해지(해약) 신청</a></li>
+              <li><a href="#">중도인출 신청/내역</a></li>
+              <li><a href="#">펀드수익률 변동 알림서비스</a></li>
+              <li><a href="#">타사연금계좌 이체 신청/조회</a></li>
+            </ul>
+          </div>
+
+          <!-- 대출 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">대출</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">대출사항 조회</a></li>
+              <li><a href="#">원리금납부계좌 변경</a></li>
+              <li><a href="#">원리금 즉시상환 신청</a></li>
+              <li><a href="#">대출 연기신청</a></li>
+              <li><a href="#">대출계약 철회</a></li>
+              <li><a href="#">금리인하 신청 및 내역</a></li>
+              <li><a href="#">신용평가결과 대응권 신청</a></li>
+              <li><a href="#">대출채권 소멸시효 완성조회</a></li>
+              <li><a href="#">기한이익상실 예정 통지</a></li>
+              <li><a href="#">주택 경매 예정 통지</a></li>
+              <li><a href="#">채권양도 예정 통지</a></li>
+            </ul>
+          </div>
+
+          <!-- 퇴직연금 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">퇴직연금</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">계약정보</a></li>
+              <li><a href="#">개인부담금 납입(즉시이체)</a></li>
+              <li><a href="#">적립금운용</a></li>
+              <li><a href="#">자동이체 등록/변경</a></li>
+              <li><a href="#">상품라인업</a></li>
+              <li><a href="#">운용지시</a></li>
+              <li><a href="#">개인형 IRP 가입</a></li>
+              <li><a href="#">증명서발급</a></li>
+              <li><a href="#">개인형 IRP 지급청구</a></li>
+            </ul>
+          </div>
+
+          <!-- 펀드 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">펀드</h3>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">펀드보유내역</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">보유펀드계좌조회</a></li>
+                <li><a href="#">펀드계좌상세조회</a></li>
+                <li><a href="#">인출가능금액조회</a></li>
+                <li><a href="#">실질수익률보고서</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">펀드매매처리</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">신규매수</a></li>
+                <li><a href="#">추가매수</a></li>
+                <li><a href="#">환매</a></li>
+                <li><a href="#">신청내역조회 및 취소</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">자동이체/은행/증명서</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">은행이체</a></li>
+                <li><a href="#">은행이체처리내역조회</a></li>
+                <li><a href="#">CMS출금이체 신청/해지/변경</a></li>
+                <li><a href="#">약정계좌 신청/해지</a></li>
+                <li><a href="#">소득공제납입증명서</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">고객정보/펀드계좌관리</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">고객정보정정</a></li>
+                <li><a href="#">통장/인감분실신고</a></li>
+                <li><a href="#">펀드계좌해지</a></li>
+                <li><a href="#">펀드계약변경</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="gnb-mega-row-divider"></div>
+
+          <!-- 신탁 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">신탁</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">신탁재산운용내역</a></li>
+            </ul>
+          </div>
+
+          <!-- 내 정보 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">내 정보</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">개인정보 변경</a></li>
+              <li><a href="#">개인신용정보 이용·제공 현황조회</a></li>
+              <li><a href="#">개인정보 유출 신고</a></li>
+              <li><a href="#">보험계약 대출이자 납입계좌</a></li>
+              <li><a href="#">나의 관심상품</a></li>
+              <li><a href="#">온라인 안내장</a></li>
+              <li><a href="#">금융거래내역</a></li>
+              <li><a href="#">전자서명조회</a></li>
+              <li><a href="#">증명서발급</a></li>
+              <li><a href="#">마케팅정보 수신동의</a></li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <!-- ══════════════════════════════════════════
+         MEGA: 보험상품
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega" id="gnbMegaProduct">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">암·건강보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">e건강보험(암보험)</a></li>
+              <li><a href="#">e암보험(비갱신형)</a></li>
+              <li><a href="#">e건강보험(암뇌심)</a></li>
+              <li><a href="#">e건강보험(뇌심)</a></li>
+              <li><a href="#">걸음e건강보험</a></li>
+              <li><a href="#">시그니처H암보험</a></li>
+              <li><a href="#">H건강플러스보험</a></li>
+              <li><a href="#">Need AI 암보험</a></li>
+              <li><a href="#">치매담은간병플러스보험</a></li>
+              <li><a href="#">e종신보험</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">종신·정기보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">e정기보험</a></li>
+              <li><a href="#">제로백H종신보험</a></li>
+              <li><a href="#">하나로H종신보험</a></li>
+              <li><a href="#">상속H종신보험</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">연금·저축보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">e디딤돌저축보험</a></li>
+              <li><a href="#">e재테크 저축보험</a></li>
+              <li><a href="#">e연금저축보험</a></li>
+              <li><a href="#">e연금보험</a></li>
+              <li><a href="#">연금·저축보험 상담</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">간편심사보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">포켓레저보험</a></li>
+              <li><a href="#">간편포켓레저보험</a></li>
+              <li><a href="#">포켓골절보험</a></li>
+              <li><a href="#">간편포켓골절보험</a></li>
+            </ul>
+            <h3 class="gnb-l2-cat"><a href="#">내 보험 분석</a></h3>
+            <h3 class="gnb-l2-cat">보험가이드</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">보험용어사전</a></li>
+            </ul>
+          </div>
+
+        </div>
+        <div class="gnb-mega-finder">
+          <div class="gnb-product-text-btns">
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-finder-link">
+                전체상품 보기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+              <p>보험상품 한눈에 찾아보기</p>
+            </div>
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-finder-link">
+                보험 상담하기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+              <p>전문가에게 보험 상담받기</p>
+            </div>
+          </div>
+          <div class="gnb-banner-wrap">
+            <div class="gnb-banner-track" id="gnbBannerTrack">
+              <div class="gnb-banner-bg active" style="background:#F5F4F2;"></div>
+              <div class="gnb-banner-bg" style="background:#5D39EA;"></div>
+              <div class="gnb-banner-bg" style="background:#FA6600;"></div>
+              <img src="./svg/gnb_banner.svg" class="gnb-banner-svg" alt="배너">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ══════════════════════════════════════════
+         MEGA: 금융상품
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega" id="gnbMegaFinance">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+
+          <!-- 대출 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">대출</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">보험계약대출(약관대출)</a></li>
+              <li><a href="#">우수고객 신용대출</a></li>
+              <li><a href="#">한화생명 신용대출</a></li>
+              <li><a href="#">홈드림 모기지론</a></li>
+              <li><a href="#">한화멤버스톤</a></li>
+            </ul>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">대출가이드</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">대출이란</a></li>
+                <li><a href="#">신용정보 관련 안내</a></li>
+                <li><a href="#">무방문 원리금납부 안내</a></li>
+                <li><a href="#">대출창구 안내</a></li>
+                <li><a href="#">아파트 시세정보</a></li>
+                <li><a href="#">협약부동산 안내</a></li>
+                <li><a href="#">대출약관</a></li>
+                <li><a href="#">금리인하요구권</a></li>
+                <li><a href="#">대출계약 철회권</a></li>
+                <li><a href="#">대출용어사전</a></li>
+                <li><a href="#">대출모집인 수수료율</a></li>
+                <li><a href="#">대출채권 소멸시효</a></li>
+                <li><a href="#">채무조정제도 안내</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 펀드 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">펀드</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">전체 펀드 상품 보기</a></li>
+            </ul>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">펀드가이드</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">펀드란?</a></li>
+                <li><a href="#">펀드투자 동영상</a></li>
+                <li><a href="#">펀드가입 프로세스</a></li>
+                <li><a href="#">펀드약관</a></li>
+                <li><a href="#">펀드공시실</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 신탁 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">신탁</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">전체 신탁 상품 보기</a></li>
+            </ul>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">신탁가이드</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">신탁이란?</a></li>
+                <li><a href="#">신탁의 유형</a></li>
+                <li><a href="#">신탁가입 프로세스</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 퇴직연금 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">퇴직연금</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">전체 퇴직연금 상품 보기</a></li>
+            </ul>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">퇴직연금가이드</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">퇴직연금제도란?</a></li>
+                <li><a href="#">퇴직연금제도 종류</a></li>
+                <li><a href="#">도입 및 기대효과</a></li>
+                <li><a href="#">퇴직연금 과세제도</a></li>
+                <li><a href="#">Why 한화생명</a></li>
+                <li><a href="#">투자가이드</a></li>
+                <li><a href="#">컨설팅 서비스</a></li>
+                <li><a href="#">K-IFRS 계리평가서비스</a></li>
+                <li><a href="#">교육안내 / 가입자교육</a></li>
+                <li><a href="#">자료실</a></li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+        <div class="gnb-mega-finder">
+          <div class="gnb-product-text-btns">
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-finder-link">
+                전체상품 보기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+              <p>금융상품 한눈에 찾아보기</p>
+            </div>
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-finder-link">
+                자산관리 상담하기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+              <p>전문가와 함께하는 맞춤 자산관리</p>
+            </div>
+          </div>
+          <div class="gnb-banner-wrap">
+            <div class="gnb-banner-track">
+              <div class="gnb-banner-bg active" style="background:#F5F4F2;"></div>
+              <div class="gnb-banner-bg" style="background:#5D39EA;"></div>
+              <div class="gnb-banner-bg" style="background:#FA6600;"></div>
+              <img src="./svg/gnb_banner.svg" class="gnb-banner-svg" alt="배너">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ══════════════════════════════════════════
+         MEGA: 혜택·정보
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega gnb-mega--auto" id="gnbMegaBenefits">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat"><a href="#">이벤트</a></h3>
+            <h3 class="gnb-l2-cat"><a href="#">라이프팁</a></h3>
+            <h3 class="gnb-l2-cat"><a href="#">헬스케어서비스</a></h3>
+            <h3 class="gnb-l2-cat"><a href="#">건강증진형보험료 할인 서비스</a></h3>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">제휴 서비스</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">상조서비스</a></li>
+              <li><a href="#">Need 암 보호시스템</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat"><a href="#">우행터 PLUS 서비스</a></h3>
+          </div>
+
+          <!-- 이용안내 (4열) -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">이용안내</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">주요업무</a></li>
+            </ul>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">한화생명종합서비스</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">보험가입</a></li>
+                <li><a href="#">보험유지</a></li>
+                <li><a href="#">보험정보</a></li>
+                <li><a href="#">(다이렉트) 보험가입</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">금융서비스 안내</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">이용방법</a></li>
+                <li><a href="#">보험</a></li>
+                <li><a href="#">대출</a></li>
+                <li><a href="#">펀드</a></li>
+                <li><a href="#">기타</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">공동인증센터</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">공동인증서 등록/변경/삭제</a></li>
+                <li><a href="#">스마트폰 인증서 복사</a></li>
+              </ul>
+            </div>
+            <ul class="gnb-l2-list">
+              <li><a href="#">로그인 안내</a></li>
+              <li><a href="#">개인회원가입 안내</a></li>
+              <li><a href="#">기업회원가입 안내</a></li>
+              <li><a href="#">디지털안내장</a></li>
+              <li><a href="#">한화생명 앱 이용안내</a></li>
+              <li><a href="#">장애인 홈페이지 이용</a></li>
+              <li><a href="#">모바일 화상상담 이용</a></li>
+              <li><a href="#">이용약관</a></li>
+              <li><a href="#">고객권리 안내</a></li>
+              <li><a href="#">개인정보처리방침</a></li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MEGA: 소비자포털
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega" id="gnbMegaConsumer">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">고객의소리</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">칭찬·불만·신고</a></li>
+              <li><a href="#">전자민원접수</a></li>
+              <li><a href="#">나의 민원</a></li>
+            </ul>
+            <h3 class="gnb-l2-cat">고객지원</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">자주묻는 질문</a></li>
+              <li><a href="#">전화상담 ARS 안내</a></li>
+              <li><a href="#">지점찾기</a></li>
+              <li><a href="#">구비서류 안내</a></li>
+              <li><a href="#">개인신용정보 이용제공 현황조회</a></li>
+              <li><a href="#">단체-개인실손 연계제도 안내</a></li>
+              <li><a href="#">두낫콜 등록/철회</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">금융소비자보호체계</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">금융소비자보호헌장</a></li>
+              <li><a href="#">금융소비자보호법</a></li>
+              <li><a href="#">금융소비자권리</a></li>
+              <li><a href="#">소비자보호조직</a></li>
+              <li><a href="#">민원처리프로세스</a></li>
+              <li><a href="#">상품개발프로세스</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">금융소비자유익정보</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">금융소비자의 소리</a></li>
+              <li><a href="#">금융소비자 유익 사이트</a></li>
+              <li><a href="#">금융소비자교육</a></li>
+              <li><a href="#">분쟁조정사례 및 판례</a></li>
+              <li><a href="#">금융감독원 소비자경보</a></li>
+              <li><a href="#">금융사고 대응안내</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">금융소비자보호 공시</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">금융소비자보호 내부통제기준</a></li>
+              <li><a href="#">금융소비자보호실태평가(현재)</a></li>
+              <li><a href="#">금융소비자보호실태평가(과거)</a></li>
+              <li><a href="#">민원건수공시 (현재)</a></li>
+              <li><a href="#">민원건수공시 (과거)</a></li>
+            </ul>
+            <h3 class="gnb-l2-cat"><a href="#">방문/전화권유판매원 조회</a></h3>
+            <h3 class="gnb-l2-cat"><a href="#">소비자보호 우수사례</a></h3>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MEGA: 로그인 (help 버튼 트리거)
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega" id="gnbMegaLogin">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols gnb-mega-cols--2">
+
+          <!-- 개인회원 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">개인회원</h3>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">로그인</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">아이디 로그인(대표홈)</a></li>
+                <li><a href="#">본인인증 로그인</a></li>
+                <li><a href="#">공동인증서 로그인</a></li>
+                <li><a href="#">앱 인증 로그인</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">회원가입</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">대표홈 회원가입</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat"><a href="#">아이디/패스워드 찾기</a></p>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">보안서비스</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">보안프로그램 안내</a></li>
+                <li><a href="#">보안프로그램 설치안내</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">증명서발급</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">소득 및 세액공제납입증명서</a></li>
+                <li><a href="#">보험료납입확인서</a></li>
+                <li><a href="#">보험증권 재발행</a></li>
+                <li><a href="#">신용/부동산대출증명서</a></li>
+                <li><a href="#">계약내용확인서</a></li>
+                <li><a href="#">원천징수영수증</a></li>
+                <li><a href="#">보험계약대출잔액증명서</a></li>
+                <li><a href="#">보험계약대출약정서</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 기업회원 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">기업회원</h3>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat"><a href="#">로그인</a></p>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">퇴직연금창구</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">담당자등록</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat"><a href="#">퇴직연금관리자</a></p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<section class="carousel-section">
+
+  <div class="carousel-track" id="track"></div>
+</section>
+
+<div class="pagination" id="pagination" style="display:none"></div>
+<div class="carousel-indicator">
+  <button class="ind-btn" id="ind-prev" aria-label="이전"><img src="./svg/left.svg" alt=""></button>
+  <span class="ind-counter"><strong id="ind-current">1</strong><span class="ind-sep">|</span><span id="ind-total">5</span></span>
+  <button class="ind-btn" id="ind-next" aria-label="다음"><img src="./svg/right.svg" alt=""></button>
+  <button class="ind-btn ind-play" id="ind-play" aria-label="일시정지"><img src="./svg/pause.svg" alt=""></button>
+</div>
+
+<!-- ── PRODUCTS SECTION (피그마 v2: 2패널 레이아웃) ── -->
+<div class="products-new-wrap">
+<section class="products-new">
+  <!-- 좌측: 타이틀 + 카테고리 버튼 -->
+  <div class="products-new-left">
+    <h2 class="products-new-title">한화생명의<br>보험부터 금융까지,</h2>
+    <div class="products-cat-list">
+      <button class="products-cat-btn active" data-pcat="0">
+        <img src="./image/44/additional loan.svg" class="pcat-ico" alt="">
+        <span>자산을 키우는 금융</span>
+        <img src="./svg/iconRight.svg" class="pcat-arrow-wrap" width="20" height="20" alt="">
+      </button>
+      <button class="products-cat-btn" data-pcat="1">
+        <img src="./image/44/care.svg" class="pcat-ico" alt="">
+        <span>일상을 지키는 보험</span>
+        <img src="./svg/iconRight.svg" class="pcat-arrow-wrap" width="20" height="20" alt="">
+      </button>
+      <button class="products-cat-btn" data-pcat="2">
+        <img src="./image/44/money-bill.svg" class="pcat-ico" alt="">
+        <span>맞춤 대출</span>
+        <img src="./svg/iconRight.svg" class="pcat-arrow-wrap" width="20" height="20" alt="">
+      </button>
+      <button class="products-cat-btn" data-pcat="3">
+        <img src="./image/44/umbrella.svg" class="pcat-ico" alt="">
+        <span>가족 지키는 종신보험</span>
+        <img src="./svg/iconRight.svg" class="pcat-arrow-wrap" width="20" height="20" alt="">
+      </button>
+      <button class="products-cat-btn" data-pcat="4">
+        <img src="./image/44/bundle_2.svg" class="pcat-ico" alt="">
+        <span>안전하게 맡기는 신탁</span>
+        <img src="./svg/iconRight.svg" class="pcat-arrow-wrap" width="20" height="20" alt="">
+      </button>
+    </div>
+  </div>
+  <!-- 우측: 2×3 카드 그리드 -->
+  <div class="ins-card-grid" id="insCardGrid">
+    <!-- 패널 0: 자산을 키우는 금융 -->
+    <div class="ins-panel active" data-panel="0">
+      <!-- Card 1: 대출 | 보험계약대출 -->
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">대출</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">보험계약대출</p>
+            <p class="fn-card-name">보험의 보장은 그대로, 생활자금이 필요할 때 편리하게</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/calculator.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">대출한도 확인하기</span></span></div>
+      </div>
+      <!-- Card 2: 펀드|인기 -12.6% -->
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">펀드</span>
+            <span class="fn-card-chip fn-card-chip--hot">인기</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-name">한국투자다시성장코리아증권투자신탁1호(주식)A-e</p>
+          </div>
+          <p class="fn-card-meta">높은위험 ∙ 증권주식형</p>
+        </div>
+        <div class="fn-card-cta fn-card-cta--split">
+          <div class="fn-card-return">
+            <span class="fn-card-return-label">1개월 수익률</span>
+            <span class="fn-card-return-value fn-card-return-value--neg">-12.6%</span>
+          </div>
+          <span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span>
+        </div>
+      </div>
+      <!-- Card 3: 펀드|인기 34% -->
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">펀드</span>
+            <span class="fn-card-chip fn-card-chip--hot">인기</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-name">카디안차이나드래곤AShare증권자(UH [주식]C-E</p>
+          </div>
+          <p class="fn-card-meta">높은위험 ∙ 증권주식형</p>
+        </div>
+        <div class="fn-card-cta fn-card-cta--split">
+          <div class="fn-card-return">
+            <span class="fn-card-return-label">1개월 수익률</span>
+            <span class="fn-card-return-value fn-card-return-value--pos">34%</span>
+          </div>
+          <span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span>
+        </div>
+      </div>
+      <!-- Card 4: 신탁|신상품 MMT -->
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">신탁</span>
+            <span class="fn-card-chip fn-card-chip--hot">신상품</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">MMT(Money Market Trust)</p>
+            <p class="fn-card-name">당일 입출금 가능! 단기자산 운용으로 금리변동 리스크 최소화</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span></div>
+      </div>
+      <!-- Card 5: 퇴직연금 265.52% -->
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">퇴직연금</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-name">NH-Amundi필승코리아증권투자신탁[주식]ClassC-P2e</p>
+          </div>
+          <p class="fn-card-meta">국내주식 ∙ 온라인 전용</p>
+        </div>
+        <div class="fn-card-cta fn-card-cta--split">
+          <div class="fn-card-return">
+            <span class="fn-card-return-label">1년 수익률</span>
+            <span class="fn-card-return-value fn-card-return-value--pos">265.52%</span>
+          </div>
+          <span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span>
+        </div>
+      </div>
+      <!-- Card 6: 신탁|신상품 MMT -->
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">신탁</span>
+            <span class="fn-card-chip fn-card-chip--hot">신상품</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">MMT(Money Market Trust)</p>
+            <p class="fn-card-name">당일 입출금 가능! 단기자산 운용으로 금리변동 리스크 최소화</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span></div>
+      </div>
+      <!-- Card 7: 퇴직연금 265.52% -->
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">퇴직연금</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-name">NH-Amundi필승코리아증권투자신탁[주식]ClassC-P2e</p>
+          </div>
+          <p class="fn-card-meta">국내주식 ∙ 온라인 전용</p>
+        </div>
+        <div class="fn-card-cta fn-card-cta--split">
+          <div class="fn-card-return">
+            <span class="fn-card-return-label">1년 수익률</span>
+            <span class="fn-card-return-value fn-card-return-value--pos">265.52%</span>
+          </div>
+          <span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span>
+        </div>
+      </div>
+      <!-- Card 8: HIGHLIGHT 암|김한화님을 위한 (클릭 시 순환) -->
+      <div class="fn-card fn-card--highlight" id="offeringCard">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip" id="offeringChip">암</span>
+            <span class="fn-card-chip fn-card-chip--hot">김한화님을 위한</span>
+          </div>
+          <p class="fn-card-name" id="offeringName">보험료 인상없이 든든하게 암진단비 보장받는 암보험</p>
+        </div>
+        <div class="fn-card-monthly">
+          <div class="fn-card-monthly-row">
+            <span class="fn-card-monthly-label" id="offeringUnit">월</span>
+            <span class="fn-card-monthly-value" id="offeringValue">57,200원</span>
+          </div>
+          <p class="fn-card-monthly-caption" id="offeringCaption">50세 남성, 100세 만기, 30년납, 5,000만원 기준</p>
+        </div>
+      </div>
+    </div>
+    <!-- 패널 1: 일상을 지키는 보험 -->
+    <div class="ins-panel" data-panel="1">
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">암∙건강</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">시그니처H통합건강</p>
+            <p class="fn-card-name">진단·수술·치료·통원까지, 보험료 인상 없이 보장하는 건강보험</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/calculator.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">보험료 계산하기</span></span></div>
+      </div>
+      <div class="fn-card fn-card--highlight">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">건강</span>
+            <span class="fn-card-chip fn-card-chip--rec">김한화님 추천</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">치매담은간병플러스보험</p>
+            <p class="fn-card-name">확진 시 지급되는 진단비로 안정적인 치료 시작!</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/calculator.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">보험료 계산하기</span></span></div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">암∙건강</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">e암보험</p>
+            <p class="fn-card-name">보험료 인상 없이 최대 1억원까지 든든한 암 보장</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/calculator.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">보험료 계산하기</span></span></div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">암∙건강</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">e건강보험(암뇌심)</p>
+            <p class="fn-card-name">암·뇌·심장 3대 질병을 한 번에 보장하는 비갱신 건강보험</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/calculator.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">보험료 계산하기</span></span></div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">사망∙종신</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">하나로H종신</p>
+            <p class="fn-card-name">물가상승에도 흔들림 없는 평생보장, 기납입보험료 50% 환급해주는 종신보험</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span></div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">사망∙종신</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">상속H종신보험</p>
+            <p class="fn-card-name">물가상승에도 흔들림 없는 평생보장, 보험가입금액에 50% 추가보장</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span></div>
+      </div>
+    </div>
+    <!-- 패널 2: 맞춤 대출 -->
+    <div class="ins-panel" data-panel="2">
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">대출</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">e보험계약대출</p>
+            <p class="fn-card-name">보험의 보장은 그대로, 생활자금이 필요할 때 편리하게</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span></div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">대출</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">한화생명 신용대출</p>
+            <p class="fn-card-name">최대1억 한도, 서류제출 없이 간편하게 인증만으로 즉시 입금해드려요</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span></div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">대출</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">주택담보대출</p>
+            <p class="fn-card-name">내 집 마련의 꿈을 실현해주는 주택담보대출</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span></div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">연금∙저축</span>
+            <span class="fn-card-chip fn-card-chip--hot">신상품</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">e디딤돌저축보험</p>
+            <p class="fn-card-name">확정금리 5%와 결혼·출산보너스로 목돈마련 저축보험</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/calculator.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">보험료 계산하기</span></span></div>
+      </div>
+      <div class="fn-card fn-card--highlight">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">건강</span>
+            <span class="fn-card-chip fn-card-chip--rec">김한화님 추천</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">치매담은간병플러스보험</p>
+            <p class="fn-card-name">확진 시 지급되는 진단비로 안정적인 치료 시작!</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/calculator.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">보험료 계산하기</span></span></div>
+      </div>
+    </div>
+    <!-- 패널 3: 가족 지키는 종신보험 -->
+    <div class="ins-panel" data-panel="3">
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">사망∙종신</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">상속H종신보험</p>
+            <p class="fn-card-name">물가상승에도 흔들림 없는 평생보장, 보험가입금액에 50% 추가보장</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span></div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">사망∙종신</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">제로백H종신보험</p>
+            <p class="fn-card-name">사망보험금을 체증형으로 강화한 종신보험</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span></div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">사망∙종신</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">e정기보험</p>
+            <p class="fn-card-name">선택한 기간 동안만 사망보험금 보장받아 실속있는 정기보험</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/calculator.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">보험료 계산하기</span></span></div>
+      </div>
+      <div class="fn-card fn-card--highlight">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">건강</span>
+            <span class="fn-card-chip fn-card-chip--rec">김한화님 추천</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">치매담은간병플러스보험</p>
+            <p class="fn-card-name">확진 시 지급되는 진단비로 안정적인 치료 시작!</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/calculator.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">보험료 계산하기</span></span></div>
+      </div>
+    </div>
+    <!-- 패널 4: 안전하게 맡기는 신탁 -->
+    <div class="ins-panel" data-panel="4">
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">신탁</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">MMT(Money Market Trust)</p>
+            <p class="fn-card-name">당일 입출금 가능! 단기자산 운용으로 금리변동 리스크 최소화</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span></div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row"><span class="fn-card-chip">신탁</span></div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">보험청구권 신탁</p>
+            <p class="fn-card-name">사망보험금을 고객님이 생전에 지정한 방식대로 수익자에게 지급하는 제도</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/phone.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">상담하기</span></span></div>
+      </div>
+      <div class="fn-card fn-card--highlight">
+        <div class="fn-card-header">
+          <div class="fn-card-badge-row">
+            <span class="fn-card-chip">건강</span>
+            <span class="fn-card-chip fn-card-chip--rec">김한화님 추천</span>
+          </div>
+          <div class="fn-card-text-group">
+            <p class="fn-card-sub">치매담은간병플러스보험</p>
+            <p class="fn-card-name">확진 시 지급되는 진단비로 안정적인 치료 시작!</p>
+          </div>
+        </div>
+        <div class="fn-card-cta"><span class="fn-card-cta-item"><img src="./svg/calculator.svg" width="28" height="28" alt=""><span class="fn-card-cta-text">보험료 계산하기</span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+<!-- ── CONTRACT SECTION ── -->
+<section class="contract-section">
+  <div class="contract-left">
+    <h2 class="contract-title">계약관리</h2>
+  </div>
+  <div class="contract-menu">
+    <div class="contract-menu-item"><img src="./svg/menu01.svg" alt="나의계약"></div>
+    <div class="contract-menu-item"><img src="./svg/menu02.svg" alt="보험료 납입"></div>
+    <div class="contract-menu-item"><img src="./svg/menu03.svg" alt="자동이체"></div>
+    <div class="contract-menu-item"><img src="./svg/menu04.svg" alt="보험금청구"></div>
+    <div class="contract-menu-item"><img src="./svg/menu06.svg" alt="퇴직연금"></div>
+    <div class="contract-menu-item"><img src="./svg/menu07.svg" alt="펀드변경"></div>
+  </div>
+</section>
+<section class="lifetip-section">
+  <div class="lifetip-left">
+    <h2 class="lifetip-title">라이프팁</h2>
+    <img src="./svg/iconRight.svg" class="lifetip-arrow" alt="">
+  </div>
+  <div class="lifetip-grid">
+    <div class="lifetip-card-wrap">
+      <div class="lt-top">
+        <span class="lt-badge">건강</span>
+        <p class="lt-title">40대인데 벌써 치매라고? 늘어나는 초기 치매</p>
+      </div>
+      <p class="lt-desc">나이와 상관없이 나타날 수 있는 초기 증상과 미리 알아두면 좋은 예방법을 정리했어요</p>
+    </div>
+    <div class="lifetip-card-wrap">
+      <div class="lt-top">
+        <span class="lt-badge">금융</span>
+        <p class="lt-title">30대부터 시작하는 노후준비 가이드</p>
+      </div>
+      <p class="lt-desc">은퇴준비 시기에 따라 노후 자산은 크게 달라져요. 지금부터 차근차근 시작할 수 있는 현실적인 연금 준비 방법을 알려드려요</p>
+    </div>
+    <div class="lifetip-card-wrap">
+      <div class="lt-top">
+        <span class="lt-badge">보험</span>
+        <p class="lt-title">실손보험 청구, 이렇게 하면 쉬워요</p>
+      </div>
+      <p class="lt-desc">서류가 복잡하고 절차가 헷갈려 보험금 청구를 미루는 경우가 많아요. 놓치기 쉬운 청구 방법부터 간편하게 처리하는 팁까지 정리했어요</p>
+    </div>
+  </div>
+</section>
+<!-- ── BANNER SECTION ── -->
+<section class="banner-section">
+  <div class="banner-card">
+    <img class="banner-img" src="./svg/banner.svg" alt="배너">
+  </div>
+</section>
+<!-- ── NOTICE + QR SECTION ── -->
+<section class="notice-section">
+  <div class="notice-left">
+    <div class="notice-header">
+      <h2 class="notice-title">공지사항</h2>
+      <a class="notice-more">더보기 <img src="./svg/iconRight.svg" alt=""></a>
+    </div>
+    <ul class="notice-list">
+      <li class="notice-item">
+        <a href="#">개인정보보호 및 신용정보보호에 관한 안내</a>
+        <img src="./svg/iconRight.svg" alt="">
+      </li>
+      <li class="notice-item">
+        <a href="#">한화생명 APP 서비스 일시 중지 안내</a>
+        <img src="./svg/iconRight.svg" alt="">
+      </li>
+      <li class="notice-item">
+        <a href="#">납입돌림 관련 상품요율변경에 따른 이용 관련 안내</a>
+        <img src="./svg/iconRight.svg" alt="">
+      </li>
+    </ul>
+  </div>
+  <div class="qr-box">
+    <div class="qr-box-text">
+      <p class="qr-box-title">한화생명 앱<br>다운로드</p>
+      <p class="qr-box-desc">보험부터 자산까지 한번에<br>편리한 한화생명의<br>앱과 함께하세요</p>
+    </div>
+    <div class="qr-code-wrap">
+      <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- QR finder patterns -->
+        <rect x="4" y="4" width="32" height="32" rx="2" fill="#272B2F"/>
+        <rect x="8" y="8" width="16" height="16" rx="1" fill="#fff"/>
+        <rect x="12" y="12" width="8" height="8" fill="#272B2F"/>
+        <rect x="44" y="4" width="32" height="32" rx="2" fill="#272B2F"/>
+        <rect x="48" y="8" width="16" height="16" rx="1" fill="#fff"/>
+        <rect x="52" y="12" width="8" height="8" fill="#272B2F"/>
+        <rect x="4" y="44" width="32" height="32" rx="2" fill="#272B2F"/>
+        <rect x="8" y="48" width="16" height="16" rx="1" fill="#fff"/>
+        <rect x="12" y="52" width="8" height="8" fill="#272B2F"/>
+        <!-- QR data dots (simplified pattern) -->
+        <rect x="32" y="4" width="4" height="4" fill="#272B2F"/>
+        <rect x="36" y="8" width="4" height="4" fill="#272B2F"/>
+        <rect x="32" y="12" width="4" height="4" fill="#272B2F"/>
+        <rect x="36" y="16" width="4" height="4" fill="#272B2F"/>
+        <rect x="32" y="20" width="4" height="4" fill="#272B2F"/>
+        <rect x="4" y="32" width="4" height="4" fill="#272B2F"/>
+        <rect x="12" y="36" width="4" height="4" fill="#272B2F"/>
+        <rect x="20" y="32" width="4" height="4" fill="#272B2F"/>
+        <rect x="8" y="36" width="4" height="4" fill="#272B2F"/>
+        <rect x="16" y="32" width="4" height="4" fill="#272B2F"/>
+        <rect x="32" y="32" width="4" height="4" fill="#272B2F"/>
+        <rect x="40" y="36" width="4" height="4" fill="#272B2F"/>
+        <rect x="36" y="32" width="4" height="4" fill="#272B2F"/>
+        <rect x="44" y="32" width="4" height="4" fill="#272B2F"/>
+        <rect x="48" y="36" width="4" height="4" fill="#272B2F"/>
+        <rect x="52" y="32" width="4" height="4" fill="#272B2F"/>
+        <rect x="60" y="36" width="4" height="4" fill="#272B2F"/>
+        <rect x="56" y="32" width="4" height="4" fill="#272B2F"/>
+        <rect x="64" y="32" width="4" height="4" fill="#272B2F"/>
+        <rect x="32" y="40" width="4" height="4" fill="#272B2F"/>
+        <rect x="40" y="44" width="4" height="4" fill="#272B2F"/>
+        <rect x="36" y="40" width="4" height="4" fill="#272B2F"/>
+        <rect x="44" y="40" width="4" height="4" fill="#272B2F"/>
+        <rect x="52" y="44" width="4" height="4" fill="#272B2F"/>
+        <rect x="48" y="40" width="4" height="4" fill="#272B2F"/>
+        <rect x="60" y="44" width="4" height="4" fill="#272B2F"/>
+        <rect x="56" y="40" width="4" height="4" fill="#272B2F"/>
+        <rect x="64" y="44" width="4" height="4" fill="#272B2F"/>
+        <rect x="32" y="48" width="4" height="4" fill="#272B2F"/>
+        <rect x="40" y="52" width="4" height="4" fill="#272B2F"/>
+        <rect x="36" y="56" width="4" height="4" fill="#272B2F"/>
+        <rect x="44" y="52" width="4" height="4" fill="#272B2F"/>
+        <rect x="52" y="56" width="4" height="4" fill="#272B2F"/>
+        <rect x="48" y="52" width="4" height="4" fill="#272B2F"/>
+        <rect x="60" y="56" width="4" height="4" fill="#272B2F"/>
+        <rect x="56" y="52" width="4" height="4" fill="#272B2F"/>
+        <rect x="64" y="60" width="4" height="4" fill="#272B2F"/>
+        <rect x="32" y="60" width="4" height="4" fill="#272B2F"/>
+        <rect x="36" y="64" width="4" height="4" fill="#272B2F"/>
+        <rect x="44" y="60" width="4" height="4" fill="#272B2F"/>
+        <rect x="60" y="52" width="4" height="4" fill="#272B2F"/>
+        <rect x="64" y="56" width="4" height="4" fill="#272B2F"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<script>
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.remove('active');
+      p.style.display = 'none';
+    });
+    btn.classList.add('active');
+    const panel = document.querySelector(`[data-panel="${btn.dataset.tab}"]`);
+    if (panel) {
+      panel.style.display = 'block';
+      requestAnimationFrame(() => panel.classList.add('active'));
+    }
+  });
+});
+
+// ── 검색 영역: mouseenter/leave + .open 클래스 토글 ──
+(function () {
+  const area    = document.getElementById('tswSearchArea');
+  const wrap    = document.getElementById('productTitleWrap');
+  const trigger = area && area.querySelector('.tsw-search-trigger');
+  const input   = document.getElementById('tswInput');
+  const back    = document.getElementById('tswBackBtn');
+  if (!area || !input) return;
+
+  let closeTimer = null;
+  let expandW = 0;
+
+  function updateRight() {
+    if (!expandW) return;
+    const areaRect = area.getBoundingClientRect();
+    // viewport 중앙 기준으로 expand-row 중앙 정렬
+    const openRight = Math.round(areaRect.right - window.innerWidth / 2 - expandW / 2);
+    area.style.setProperty('--tsw-open-right', openRight + 'px');
+  }
+
+  // 실제 pill 너비 측정 → 너비·중앙정렬 right값 CSS 변수로 주입 (폰트 로드 후)
+  window.addEventListener('load', function () {
+    const row   = document.getElementById('tswExpandRow');
+    const inner = row && row.querySelector('.tsw-expand-inner');
+    if (!row || !inner) return;
+    const saved = row.style.cssText;
+    row.style.cssText = 'position:absolute;visibility:hidden;width:9999px;overflow:visible;right:0;top:0;transition:none;pointer-events:none;';
+    expandW = Math.ceil(inner.getBoundingClientRect().width);
+    row.style.cssText = saved;
+    row.style.transition = 'none';
+    requestAnimationFrame(() => requestAnimationFrame(() => { row.style.transition = ''; }));
+    if (expandW > 60) {
+      area.style.setProperty('--tsw-open-w', expandW + 'px');
+      updateRight();
+      window.addEventListener('resize', updateRight, { passive: true });
+    }
+  });
+
+  function openSearch() {
+    updateRight(); // 열릴 때마다 현재 위치 기준으로 재계산
+    if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+    area.classList.add('open');
+    if (wrap) wrap.classList.add('search-open');
+    setTimeout(() => input.focus(), 60);
+  }
+
+  function closeSearch() {
+    area.classList.remove('open');
+    if (wrap) wrap.classList.remove('search-open');
+    input.blur();
+    input.value = '';
+  }
+
+  function scheduleClose() {
+    closeTimer = setTimeout(() => {
+      if (!area.matches(':focus-within')) closeSearch();
+    }, 200);
+  }
+
+  // 트리거 버튼 mouseenter → 열기
+  if (trigger) trigger.addEventListener('mouseenter', openSearch);
+
+  // 영역 밖으로 마우스 이탈 → 닫기 예약 (포커스 없을 때만)
+  area.addEventListener('mouseleave', scheduleClose);
+
+  // 영역 재진입 → 닫기 취소
+  area.addEventListener('mouseenter', () => {
+    if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+  });
+
+  // 닫기 버튼
+  if (back) back.addEventListener('click', e => { e.stopPropagation(); closeSearch(); });
+
+  // input blur 후 마우스도 없으면 닫기
+  input.addEventListener('blur', () => {
+    setTimeout(() => { if (!area.matches(':hover')) closeSearch(); }, 200);
+  });
+
+  // ESC
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('deviceDemoOverlay').classList.contains('active')) {
+        closeDeviceDemo();
+      } else {
+        closeSearch();
+      }
+    }
+  });
+
+  // 확장된 영역 클릭 시 input 포커스
+  area.addEventListener('click', function (e) {
+    if (area.classList.contains('open') &&
+        !e.target.closest('.tsw-back-pill') &&
+        !e.target.closest('.tsw-filter-pill') &&
+        !e.target.closest('.tsw-consult-pill')) {
+      input.focus();
+    }
+  });
+
+  // ── 5초 간격으로 타이틀 ↔ 검색펼침 자동 토글 (검색영역 hover 시 일시정지) ──
+  (function () {
+    if (!wrap) return;
+    let isPaused = false;
+    setInterval(function () {
+      if (isPaused) return;
+      if (area.classList.contains('open')) {
+        area.classList.remove('open');
+        wrap.classList.remove('search-open');
+        input.blur();
+      } else {
+        area.classList.add('open');
+        wrap.classList.add('search-open');
+      }
+    }, 5000);
+    area.addEventListener('mouseenter', () => { isPaused = true; });
+    area.addEventListener('mouseleave', () => { isPaused = false; });
+  })();
+})();
+
+// GNB 스크롤: util bar를 스크롤 위치에 1:1 직접 연동
+const gnbSub  = document.querySelector('.gnb-sub');
+const gnbMain = document.querySelector('.gnb-main');
+let subH = gnbSub ? gnbSub.offsetHeight : 0;
+
+function updateGnbScroll() {
+  if (!gnbSub || !gnbMain) return;
+  if (!subH) subH = gnbSub.offsetHeight;
+  if (!subH) return;
+  const progress = Math.min(window.scrollY / subH, 1);
+  gnbSub.style.transform    = `translateY(-${progress * 100}%)`;
+  gnbSub.style.opacity      = String(1 - progress);
+  gnbSub.style.marginBottom = `-${progress * subH}px`;
+}
+
+window.addEventListener('load', () => {
+  if (gnbSub) subH = gnbSub.offsetHeight;
+  updateGnbScroll();
+});
+
+window.addEventListener('scroll', updateGnbScroll, { passive: true });
+
+/* ── 바텀 네비 스크롤 hide/show ── */
+window.addEventListener('DOMContentLoaded', function() {
+  var appNav = document.getElementById('app-nav');
+  if (!appNav) return;
+  var lastY = 0;
+  var ticking = false;
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      window.requestAnimationFrame(function() {
+        var currentY = window.pageYOffset || document.documentElement.scrollTop;
+        if (currentY > lastY && currentY > 80) {
+          appNav.classList.add('nav-hidden');
+        } else if (currentY < lastY) {
+          appNav.classList.remove('nav-hidden');
+        }
+        lastY = currentY;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+});
+
+/* ── GNB 롤링 배너 ── */
+function initGnbBanner(trackId, megaId) {
+  (function() {
+    const slides = document.querySelectorAll('#' + trackId + ' .gnb-banner-bg');
+    if (!slides.length) return;
+
+    let current = 0;
+    let timer = null;
+
+    function goTo(idx) {
+      slides[current].classList.remove('active');
+      current = (idx + slides.length) % slides.length;
+      slides[current].classList.add('active');
+    }
+
+    function next() { goTo(current + 1); }
+
+    function startTimer() { timer = setInterval(next, 3000); }
+    function resetTimer() { clearInterval(timer); startTimer(); }
+
+    const mega = document.getElementById(megaId);
+    if (mega) {
+      mega.addEventListener('mouseenter', () => clearInterval(timer));
+      mega.addEventListener('mouseleave', startTimer);
+    }
+
+    startTimer();
+  })();
+}
+initGnbBanner('gnbBannerTrack', 'gnbMegaProduct');
+
+// 라이프팁 드래그 스크롤
+const ltTrack = document.getElementById('lifetipTrack');
+if (ltTrack) {
+  let isDown = false, startX, scrollLeft;
+  ltTrack.addEventListener('mousedown', e => { isDown = true; ltTrack.classList.add('grabbing'); startX = e.pageX - ltTrack.offsetLeft; scrollLeft = ltTrack.scrollLeft; });
+  ltTrack.addEventListener('mouseleave', () => { isDown = false; ltTrack.classList.remove('grabbing'); });
+  ltTrack.addEventListener('mouseup', () => { isDown = false; ltTrack.classList.remove('grabbing'); });
+  ltTrack.addEventListener('mousemove', e => { if (!isDown) return; e.preventDefault(); const x = e.pageX - ltTrack.offsetLeft; ltTrack.scrollLeft = scrollLeft - (x - startX) * 1.2; });
+}
+
+/* ── Mega Menus ── */
+(function() {
+  const gnbMain    = document.querySelector('.gnb-main');
+  const dimOverlay = document.getElementById('gnbDimOverlay');
+  const configs    = [
+    { itemId: 'gnb-mycontract-item', megaId: 'gnbMegaMyContract' },
+    { itemId: 'gnb-product-item',    megaId: 'gnbMegaProduct'    },
+    { itemId: 'gnb-finance-item',    megaId: 'gnbMegaFinance'    },
+    { itemId: 'gnb-benefits-item',   megaId: 'gnbMegaBenefits'   },
+    { itemId: 'gnb-consumer-item',   megaId: 'gnbMegaConsumer'   },
+    { itemId: 'gnb-login-btn',       megaId: 'gnbMegaLogin'      },
+  ];
+  const allMegas = configs.map(c => document.getElementById(c.megaId)).filter(Boolean);
+
+  let hideTimer;
+
+  function updateTop(mega) {
+    const rect = gnbMain.getBoundingClientRect();
+    mega.style.top = rect.bottom + 'px';
+    if (dimOverlay) dimOverlay.style.top = rect.bottom + 'px';
+  }
+
+  function closeAll() {
+    allMegas.forEach(m => m.classList.remove('open'));
+    if (dimOverlay) dimOverlay.classList.remove('open');
+  }
+
+  function show(mega) {
+    clearTimeout(hideTimer);
+    closeAll();
+    updateTop(mega);
+    mega.classList.add('open');
+    if (dimOverlay) dimOverlay.classList.add('open');
+  }
+
+  function hide() {
+    hideTimer = setTimeout(closeAll, 120);
+  }
+
+  configs.forEach(({ itemId, megaId }) => {
+    const item = document.getElementById(itemId);
+    const mega = document.getElementById(megaId);
+    if (!item || !mega) return;
+    item.addEventListener('mouseenter', () => show(mega));
+    item.addEventListener('mouseleave', hide);
+    mega.addEventListener('mouseenter', () => { clearTimeout(hideTimer); });
+    mega.addEventListener('mouseleave', hide);
+  });
+
+  if (dimOverlay) dimOverlay.addEventListener('mouseenter', hide);
+
+  window.addEventListener('scroll', () => {
+    const anyOpen = allMegas.some(m => m.classList.contains('open'));
+    if (anyOpen) {
+      clearTimeout(hideTimer);
+      allMegas.forEach(m => {
+        m.style.transition = 'none';
+        m.classList.remove('open');
+      });
+      if (dimOverlay) {
+        dimOverlay.style.transition = 'none';
+        dimOverlay.classList.remove('open');
+      }
+      requestAnimationFrame(() => {
+        allMegas.forEach(m => { m.style.transition = ''; });
+        if (dimOverlay) dimOverlay.style.transition = '';
+      });
+    }
+  }, { passive: true });
+})();
+
+/* ---------- GNB L3 accordion ---------- */
+(function() {
+  const CHEV_SVG = `<svg class="l3-chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  document.querySelectorAll('.gnb-l3-group').forEach(group => {
+    const l4 = group.querySelector('.gnb-l4-list');
+    if (!l4) return;                          /* no collapsible content → skip */
+    const cat = group.querySelector('.gnb-l3-cat');
+    if (!cat) return;
+    /* inject chevron icon */
+    cat.insertAdjacentHTML('beforeend', CHEV_SVG);
+    cat.style.cursor = 'pointer';
+    cat.addEventListener('click', () => {
+      group.classList.toggle('open');
+    });
+  });
+})();
+
+</script>
+
+
+<template id="tmpl-card">
+<svg width="424" height="348" viewBox="0 0 424 348" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_d_6502_144721)">
+<rect x="16" y="14" width="392" height="316" rx="26" fill="#5D39EA"/>
+</g>
+<g opacity="0.8">
+<path d="M49 34.25H83C90.0416 34.25 95.75 39.9584 95.75 47C95.75 54.0416 90.0416 59.75 83 59.75H49C41.9584 59.75 36.25 54.0416 36.25 47C36.25 39.9584 41.9584 34.25 49 34.25Z" stroke="white" stroke-width="0.5"/>
+<path d="M50.516 43.904C50.516 44.264 50.436 44.612 50.276 44.948C50.116 45.284 49.9 45.568 49.628 45.8C49.356 46.056 49.04 46.252 48.68 46.388C48.328 46.524 47.944 46.592 47.528 46.592C47.128 46.592 46.744 46.524 46.376 46.388C46.016 46.252 45.7 46.056 45.428 45.8C45.164 45.568 44.956 45.284 44.804 44.948C44.652 44.612 44.576 44.264 44.576 43.904C44.576 43.536 44.652 43.184 44.804 42.848C44.956 42.504 45.164 42.212 45.428 41.972C45.7 41.716 46.016 41.52 46.376 41.384C46.744 41.24 47.128 41.168 47.528 41.168C47.944 41.168 48.328 41.24 48.68 41.384C49.04 41.52 49.356 41.716 49.628 41.972C49.9 42.212 50.116 42.504 50.276 42.848C50.436 43.184 50.516 43.536 50.516 43.904ZM49.208 43.904C49.208 43.672 49.16 43.464 49.064 43.28C48.968 43.088 48.852 42.916 48.716 42.764C48.556 42.628 48.372 42.516 48.164 42.428C47.964 42.34 47.752 42.296 47.528 42.296C47.304 42.296 47.088 42.34 46.88 42.428C46.68 42.516 46.508 42.628 46.364 42.764C46.212 42.916 46.092 43.088 46.004 43.28C45.916 43.464 45.872 43.672 45.872 43.904C45.872 44.12 45.916 44.324 46.004 44.516C46.092 44.7 46.212 44.868 46.364 45.02C46.508 45.156 46.68 45.268 46.88 45.356C47.088 45.436 47.304 45.476 47.528 45.476C47.752 45.476 47.964 45.436 48.164 45.356C48.372 45.268 48.556 45.156 48.716 45.02C48.852 44.868 48.968 44.7 49.064 44.516C49.16 44.324 49.208 44.12 49.208 43.904ZM53.492 40.724V43.268H55.052V44.42H53.492V46.976H52.172V40.724H53.492ZM52.172 48.572H47.468V50.312H52.172V48.572ZM53.492 51.428H46.172V47.456H53.492V51.428ZM60.4559 46.664C60.1839 46.664 59.9479 46.564 59.7479 46.364C59.5479 46.164 59.4479 45.928 59.4479 45.656C59.4479 45.376 59.5479 45.14 59.7479 44.948C59.9479 44.748 60.1839 44.648 60.4559 44.648C60.7359 44.648 60.9719 44.748 61.1639 44.948C61.3639 45.14 61.4639 45.376 61.4639 45.656C61.4639 45.928 61.3639 46.164 61.1639 46.364C60.9719 46.564 60.7359 46.664 60.4559 46.664ZM72.6355 41.372V42.536C72.6355 43.704 72.0915 44.764 71.0035 45.716C69.9155 46.652 68.6115 47.304 67.0915 47.672L66.4315 46.7C67.8235 46.316 68.9675 45.776 69.8635 45.08C70.7995 44.36 71.2675 43.616 71.2675 42.848V42.488H67.2355V41.372H72.6355ZM75.7795 40.724V48.872H74.4715V45.08H72.5995V43.964H74.4715V40.724H75.7795ZM76.0675 51.428H68.4835V47.912H69.8035V50.3H76.0675V51.428ZM81.7303 45.716C80.6343 46.652 79.3543 47.304 77.8903 47.672L77.1943 46.688C78.6023 46.32 79.7623 45.76 80.6743 45.008C81.6023 44.232 82.0663 43.5 82.0663 42.812V42.488H78.0343V41.372H83.4343V42.44C83.4343 43.648 82.8663 44.74 81.7303 45.716ZM86.2423 40.724V43.508H87.9583V44.66H86.2423V47.276H84.9343V40.724H86.2423ZM86.6023 49.496C86.6023 49.84 86.5023 50.144 86.3023 50.408C86.1023 50.672 85.8263 50.9 85.4743 51.092C85.1223 51.3 84.6863 51.452 84.1663 51.548C83.6543 51.652 83.1263 51.704 82.5823 51.704C82.0463 51.704 81.5223 51.652 81.0103 51.548C80.5063 51.452 80.0703 51.3 79.7023 51.092C79.3583 50.9 79.0903 50.672 78.8983 50.408C78.7143 50.144 78.6223 49.84 78.6223 49.496C78.6223 49.16 78.7143 48.86 78.8983 48.596C79.0903 48.332 79.3583 48.104 79.7023 47.912C80.0703 47.704 80.5063 47.548 81.0103 47.444C81.5223 47.34 82.0463 47.288 82.5823 47.288C83.1263 47.288 83.6543 47.34 84.1663 47.444C84.6863 47.548 85.1223 47.704 85.4743 47.912C85.8263 48.104 86.1023 48.332 86.3023 48.596C86.5023 48.86 86.6023 49.16 86.6023 49.496ZM85.2823 49.496C85.2823 49.336 85.2183 49.196 85.0903 49.076C84.9623 48.956 84.7823 48.848 84.5503 48.752C84.3183 48.648 84.0223 48.564 83.6623 48.5C83.3023 48.436 82.9423 48.404 82.5823 48.404C82.2303 48.404 81.8743 48.432 81.5143 48.488C81.1543 48.544 80.8623 48.632 80.6383 48.752C80.4063 48.864 80.2303 48.976 80.1103 49.088C79.9983 49.2 79.9423 49.336 79.9423 49.496C79.9423 49.664 79.9983 49.808 80.1103 49.928C80.2303 50.048 80.4063 50.16 80.6383 50.264C80.8623 50.368 81.1543 50.444 81.5143 50.492C81.8743 50.548 82.2303 50.576 82.5823 50.576C82.9423 50.576 83.3023 50.548 83.6623 50.492C84.0223 50.444 84.3183 50.368 84.5503 50.264C84.7903 50.16 84.9703 50.048 85.0903 49.928C85.2183 49.808 85.2823 49.664 85.2823 49.496Z" fill="white"/>
+</g>
+<g clip-path="url(#clip0_6502_144721)">
+<path d="M186.927 237.856C161.703 239.616 137.799 225.88 129 211.459L186.927 213.659C191.327 220.258 218.457 235.656 186.927 237.856Z" fill="#3C20AF"/>
+<path d="M137.718 164.828C140.879 164.464 144.9 164.851 147.612 165.301L147.147 168.995C147.023 168.975 146.897 168.957 146.769 168.937L148.061 172.148C146.096 173.19 142.996 174.461 140.071 174.838C138.611 175.026 137.072 175.009 135.704 174.525C134.289 174.025 133.013 173.003 132.308 171.228C131.961 170.355 131.806 169.381 132.045 168.404C132.284 167.427 132.847 166.733 133.45 166.262C134.578 165.38 136.19 165.003 137.718 164.828ZM146.448 168.888C143.904 168.511 140.58 168.25 138.042 168.542C136.6 168.708 135.693 169.026 135.281 169.348C135.239 169.38 135.21 169.406 135.19 169.426C135.199 169.476 135.219 169.558 135.267 169.68C135.508 170.285 135.935 170.701 136.661 170.957C137.433 171.23 138.474 171.288 139.708 171.129C142.058 170.826 144.67 169.799 146.448 168.888Z" fill="#303543"/>
+<path d="M153.916 139.775C144.155 140.211 146.817 158.538 147.261 160.283L172.995 145.011C169.889 143.12 161.725 139.426 153.916 139.775Z" fill="#FA6600"/>
+<path d="M146.4 49.4832L145.83 -3.91207L206.487 -6.97944L186.517 50.3012C186.077 53.7467 190.889 72.2847 191.37 81.7968C192.292 100.023 184.144 146.642 182.574 176.308L166.313 175.297C163.523 163.823 156.801 137.265 152.239 122.824C146.537 104.773 143.656 74.2491 144.702 67.8419C146.205 58.6294 146.437 52.6601 146.4 49.4832Z" fill="#FFD0C3"/>
+<path d="M159.632 154.046L159.776 156.905L185.508 155.603C185.841 144.697 192.177 110.472 191.319 99.5111C190.873 93.8022 179.708 93.4241 170.161 92.1875C160.614 90.9508 150.802 94.8624 147.89 97.3022C145.561 99.254 148.409 107.555 150.355 117.001L159.632 154.046Z" fill="#F0F0F0"/>
+<path d="M196.364 153.572C197.543 159.952 199.194 175.121 196.364 184.761C198.958 189.723 196.066 194.21 189.839 198.746C192.434 201.818 192.328 214.077 187.234 217.479L138.323 216.461C133.606 215.988 128.016 215.383 129.148 207.444C130.563 197.521 139.053 190.432 140.468 184.761C141.6 180.225 146.506 167.609 148.156 159.102C149.447 155.366 155.232 151.671 161.616 146.904L168.647 140.613C171.3 136.908 173.718 132.954 177.682 132.528C189.839 131.221 186.312 142.337 189.839 146.033C194.274 150.681 194.656 150.15 196.364 153.572Z" fill="#FA4B00"/>
+<path d="M145.975 196.147C143.257 202.329 136.314 212.207 133.402 215.588C138.837 220.611 172.144 218.775 187.996 217.809C187.996 217.809 188.877 217.365 190.638 214.017C193.98 207.665 189.541 204.206 195.041 200.043C200.777 195.701 199.84 179.725 197.899 177.31C195.958 174.895 193.047 168.616 172.665 167.65C152.283 166.684 149.372 188.419 145.975 196.147Z" fill="#302A29"/>
+<path d="M147.497 200.007C145.752 204.401 137.055 212.912 133.566 216.01C132.171 216.01 130.905 214.886 130.469 214.463C143.988 201.365 146.188 189.444 150.113 180.994C154.039 172.543 168.348 159.477 182.304 160.322C196.26 161.167 197.505 173.67 199.395 176.346V183.106C196.924 180.289 189.539 174.487 179.77 173.811C167.558 172.966 156.219 179.726 153.602 184.796C150.986 189.866 149.677 194.514 147.497 200.007Z" fill="#FDEBE0"/>
+<path d="M140.458 173.435C140.808 172.543 141.814 172.102 142.706 172.452C143.598 172.802 144.038 173.808 143.688 174.7C143.46 175.282 143.135 176.361 142.968 177.567C142.797 178.796 142.817 179.976 143.114 180.865C143.418 181.773 142.928 182.756 142.019 183.06C141.11 183.364 140.128 182.874 139.824 181.966C139.283 180.349 139.329 178.557 139.532 177.09C139.739 175.6 140.136 174.258 140.458 173.435Z" fill="#303543"/>
+<path d="M245.422 27.6416L241.922 -28.5278C241.922 -28.5278 243.12 -28.5344 244.021 -28.5394L297.951 -28.8368C298.928 -28.8421 300.089 -28.9486 300.063 -28.8484L292.175 24.094C292.144 24.3725 292.186 24.6566 292.292 24.9158C300.199 44.2395 296.163 63.2694 292.806 71.3326C292.561 71.9198 291.987 72.2837 291.354 72.2872L265.319 72.4308C264.881 72.4332 264.458 72.2636 264.18 71.9237C259.449 66.1416 247.674 38.8599 245.453 27.9469C245.432 27.8443 245.423 27.7464 245.422 27.6416Z" fill="#FFD0C3"/>
+<path d="M264.645 75.7049L254.004 53.502C253.977 48.6271 257.866 37.8803 273.636 33.8932C289.406 29.9062 295.915 37.4637 297.199 41.7408L298.96 56.3565L264.645 75.7049Z" fill="#F0F0F0"/>
+<path d="M147.384 201.611C162.801 197.752 183.591 201.24 192.058 203.467C191.007 204.951 191.037 208.538 191.183 210.146C179.795 204.209 138.625 210.517 140.815 209.404C142.567 208.514 145.924 203.838 147.384 201.611Z" fill="#393939"/>
+<path d="M164.859 202.786C165.271 200.427 167.518 198.848 169.877 199.259C172.237 199.671 173.816 201.918 173.404 204.277C173.304 204.851 173.199 205.592 173.067 206.519C172.94 207.415 172.793 208.445 172.621 209.485C172.298 211.439 171.814 213.916 170.974 215.808C170.003 217.997 167.44 218.984 165.251 218.012C163.062 217.041 162.075 214.479 163.047 212.289C163.387 211.523 163.735 210.053 164.063 208.071C164.216 207.142 164.35 206.205 164.479 205.298C164.603 204.423 164.73 203.525 164.859 202.786Z" fill="#393939"/>
+<path d="M250.998 155.437C248.741 146.868 260.229 128.042 265.211 102.355L270.386 118.436L250.998 155.437Z" fill="#FF8F4C"/>
+<path d="M302.473 50.1759C311.398 54.1626 314.798 69.8531 315.7 77.9621C297.406 91.9578 261.476 113.732 264.104 88.8619C267.389 57.7746 277.599 50.9071 281.272 48.8263C284.946 46.7456 291.316 45.1926 302.473 50.1759Z" fill="#FA4B00"/>
+<path d="M264.103 93.6409C263.76 61.717 284.785 53.812 295.341 53.8499C311.836 53.76 319.495 72.9189 316.464 88.4029C312.55 108.404 314.346 113.445 315.059 135.707C315.772 157.969 303.564 193.173 272.434 187.081C241.304 180.988 250.588 147.548 254.929 140.515C260.478 131.524 264.532 133.546 264.103 93.6409Z" fill="#302A29"/>
+<path d="M279.258 61.4938C285.769 54.9289 293.93 54.8773 297.196 55.6721C302.024 55.8003 309.589 61.4903 312.769 64.3194C307.314 55.6304 293.453 40.9409 279.141 54.9382C264.829 68.9354 263.38 87.7833 264.044 96.3124C264.954 77.359 271.119 69.6999 279.258 61.4938Z" fill="#FFE0CC"/>
+<path d="M292.736 120.429C297.952 121.018 300.558 124.81 301.64 128.13C302.679 131.32 302.63 134.761 302.324 136.973L302.323 136.972C301.436 143.855 299.213 154.051 295.291 162.211C293.335 166.279 290.78 170.219 287.429 172.9C283.906 175.717 279.466 177.136 274.439 175.791C269.327 174.422 266.329 170.896 265.215 166.462C264.198 162.412 264.774 157.799 265.877 153.525C268.101 144.909 273.064 135.485 276.901 129.437C277.909 127.701 279.721 125.388 282.2 123.533C284.766 121.614 288.396 119.939 292.736 120.429ZM292.497 129.566C292.36 129.43 292.179 129.298 291.741 129.248C290.342 129.09 288.926 129.585 287.517 130.639C286.081 131.714 285.017 133.114 284.55 133.937L284.494 134.035L284.434 134.13C280.83 139.798 276.375 148.367 274.471 155.744C273.506 159.482 273.34 162.38 273.823 164.3C274.208 165.836 274.952 166.74 276.735 167.217C278.604 167.718 280.192 167.324 281.885 165.969C283.75 164.478 285.599 161.887 287.292 158.365C290.659 151.362 292.709 142.168 293.526 135.8L293.529 135.778L293.533 135.756C293.721 134.395 293.696 132.397 293.202 130.879C292.966 130.157 292.694 129.76 292.497 129.566Z" fill="#393939"/>
+<path d="M285.964 108.849C274.554 109.37 265.402 116.003 262.823 120.912L264.69 96.2361C283.774 88.6971 305.808 96.7045 314.439 101.651L314.275 116.429C312.412 110.99 297.002 108.346 285.964 108.849Z" fill="#393939"/>
+<path d="M264.743 179.223L269.355 169.081C270.369 166.85 273 165.863 275.231 166.878C277.462 167.892 278.448 170.523 277.434 172.754L272.822 182.897C271.808 185.128 269.177 186.114 266.946 185.1C264.715 184.085 263.728 181.454 264.743 179.223Z" fill="#393939"/>
+<path d="M288.899 124.251L290.857 113.398C291.292 110.986 293.6 109.384 296.012 109.819C298.424 110.254 300.026 112.562 299.591 114.974L297.633 125.827C297.198 128.239 294.89 129.841 292.478 129.406C290.066 128.971 288.464 126.663 288.899 124.251Z" fill="#393939"/>
+<path d="M287.287 165.643C289.718 165.334 291.94 167.054 292.25 169.485L293.625 180.283C293.935 182.713 292.215 184.935 289.784 185.245C287.353 185.554 285.131 183.835 284.821 181.404L283.445 170.606C283.136 168.175 284.856 165.953 287.287 165.643Z" fill="#393939"/>
+<path d="M292.555 154.622C294.125 152.741 296.924 152.488 298.806 154.058L307.164 161.032C309.045 162.602 309.298 165.399 307.728 167.281C306.158 169.163 303.36 169.416 301.478 167.846L293.119 160.873C291.238 159.303 290.985 156.504 292.555 154.622Z" fill="#393939"/>
+<path d="M295.485 135.712C295.421 133.262 297.355 131.224 299.805 131.159L310.309 130.884C312.759 130.82 314.797 132.754 314.861 135.204C314.925 137.654 312.991 139.692 310.542 139.756L300.038 140.032C297.588 140.097 295.549 138.162 295.485 135.712Z" fill="#393939"/>
+<path d="M264.389 121.312C265.845 119.341 268.624 118.924 270.595 120.381L281.584 128.503C283.554 129.959 283.971 132.737 282.514 134.708C281.058 136.679 278.279 137.096 276.308 135.639L265.32 127.518C263.349 126.061 262.932 123.283 264.389 121.312Z" fill="#393939"/>
+<path d="M273.591 147.206C273.835 144.767 272.056 142.592 269.618 142.348L258.787 141.261C256.349 141.017 254.174 142.795 253.929 145.233C253.685 147.672 255.463 149.847 257.902 150.092L268.733 151.179C271.171 151.423 273.346 149.644 273.591 147.206Z" fill="#393939"/>
+<path d="M269.62 158.329C268.372 156.22 265.65 155.522 263.541 156.77L254.173 162.313C252.064 163.561 251.366 166.282 252.613 168.391C253.861 170.5 256.583 171.199 258.692 169.951L268.061 164.409C270.17 163.161 270.868 160.439 269.62 158.329Z" fill="#393939"/>
+<path d="M296.793 80.7653C297.789 79.5337 299.667 79.5338 300.663 80.7653L302.316 82.809C303.039 83.7018 304.278 83.9846 305.316 83.4936L307.692 82.3696C309.124 81.6923 310.816 82.5071 311.179 84.0489L311.782 86.6075C312.045 87.7253 313.039 88.5178 314.188 88.5258L316.816 88.5442C318.4 88.5552 319.571 90.0235 319.229 91.5702L318.662 94.137C318.415 95.2583 318.966 96.4035 319.997 96.909L322.358 98.066C323.78 98.7632 324.198 100.594 323.219 101.839L321.594 103.906C320.885 104.809 320.885 106.08 321.594 106.983L323.219 109.049C324.198 110.295 323.78 112.125 322.358 112.823L319.997 113.98C318.966 114.485 318.415 115.63 318.662 116.752L319.229 119.318C319.571 120.865 318.4 122.333 316.816 122.344L314.188 122.363C313.039 122.371 312.045 123.163 311.782 124.281L311.179 126.84C310.816 128.382 309.124 129.196 307.692 128.519L305.316 127.395C304.278 126.904 303.039 127.187 302.316 128.08L300.663 130.123C299.667 131.355 297.789 131.355 296.793 130.123L295.139 128.08C294.417 127.187 293.178 126.904 292.14 127.395L289.763 128.519C288.331 129.196 286.64 128.382 286.276 126.84L285.673 124.281C285.41 123.163 284.416 122.371 283.268 122.363L280.639 122.344C279.055 122.333 277.884 120.865 278.226 119.318L278.793 116.752C279.041 115.63 278.489 114.485 277.458 113.98L275.098 112.823C273.676 112.125 273.258 110.295 274.237 109.049L275.861 106.983C276.571 106.08 276.571 104.809 275.861 103.906L274.237 101.839C273.258 100.594 273.676 98.7632 275.098 98.066L277.458 96.909C278.489 96.4035 279.041 95.2583 278.793 94.137L278.226 91.5702C277.884 90.0235 279.055 88.5552 280.639 88.5442L283.268 88.5258C284.416 88.5178 285.41 87.7253 285.673 86.6075L286.276 84.0489C286.64 82.5071 288.331 81.6923 289.763 82.3696L292.14 83.4936C293.178 83.9846 294.417 83.7018 295.139 82.809L296.793 80.7653Z" fill="#FC9F8B"/>
+<path d="M298.728 88.5273L301.74 92.2506L306.069 90.2029L307.168 94.8643L311.957 94.8978L310.923 99.574L315.224 101.682L312.264 105.447L315.224 109.212L310.923 111.32L311.957 115.996L307.168 116.03L306.069 120.691L301.74 118.643L298.728 122.367L295.716 118.643L291.387 120.691L290.289 116.03L285.5 115.996L286.533 111.32L282.233 109.212L285.193 105.447L282.233 101.682L286.533 99.574L285.5 94.8978L290.289 94.8643L291.387 90.2029L295.716 92.2506L298.728 88.5273Z" fill="#FA4B00"/>
+</g>
+<path d="M80.0213 236.22H65.4353V233.594H80.0213V236.22ZM76.6413 232.658H68.8153V230.032H76.6413V232.658ZM79.2673 241.394C79.2673 241.966 79.0853 242.564 78.7473 243.136C78.3833 243.76 77.9153 244.254 77.3433 244.618C76.7453 245.034 76.0693 245.346 75.2893 245.528C74.4833 245.736 73.6253 245.84 72.7413 245.84C71.9093 245.84 71.0773 245.736 70.2973 245.528C69.4913 245.346 68.7893 245.034 68.2173 244.618C67.5933 244.254 67.1513 243.76 66.8393 243.136C66.5013 242.564 66.3453 241.966 66.3453 241.394C66.3453 240.796 66.5013 240.198 66.8393 239.6C67.1513 239.028 67.5933 238.56 68.1913 238.144C68.7893 237.754 69.4913 237.442 70.2973 237.182C71.0773 236.974 71.9093 236.844 72.7413 236.844C73.6253 236.844 74.4833 236.974 75.2893 237.182C76.0693 237.442 76.7453 237.754 77.3433 238.144C77.9153 238.56 78.3833 239.028 78.7473 239.6C79.0853 240.198 79.2673 240.796 79.2673 241.394ZM76.0173 241.394C76.0173 240.9 75.7053 240.458 75.1333 240.068C74.5093 239.704 73.7293 239.496 72.7413 239.496C71.7533 239.496 70.9993 239.704 70.4533 240.068C69.8813 240.458 69.6213 240.9 69.6213 241.394C69.6213 241.888 69.8813 242.304 70.4533 242.668C70.9993 243.032 71.7533 243.214 72.7413 243.214C73.7293 243.214 74.5093 243.032 75.1333 242.642C75.7053 242.278 76.0173 241.862 76.0173 241.394ZM84.9873 247.712H81.7633V229.746H84.9873V237.416H88.2113V240.224H84.9873V247.712ZM85.6633 253.25H68.8153V246.828H72.0913V250.52H85.6633V253.25ZM104.355 236.714H89.3266V234.14H104.355V236.714ZM100.897 233.308H92.7846V230.708H100.897V233.308ZM103.549 241.68C103.549 242.252 103.367 242.798 103.029 243.344C102.665 243.916 102.171 244.384 101.599 244.774C100.949 245.138 100.221 245.424 99.4406 245.606C99.1286 245.684 98.8166 245.736 98.5046 245.762V247.452C100.455 247.374 102.717 247.218 105.317 246.958V249.688C101.547 250.052 97.9326 250.234 94.4486 250.234H88.9366V247.504H95.3326V245.762C94.9686 245.736 94.6306 245.684 94.3186 245.606C93.5126 245.424 92.8106 245.138 92.1866 244.774C91.5626 244.384 91.0946 243.916 90.7826 243.344C90.4446 242.798 90.2886 242.252 90.2886 241.68C90.2886 241.108 90.4446 240.536 90.7826 239.99C91.0946 239.47 91.5626 239.002 92.1866 238.56C92.8106 238.196 93.5126 237.91 94.3446 237.702C95.1246 237.52 95.9566 237.416 96.8406 237.416C97.7766 237.416 98.6346 237.52 99.4406 237.702C100.221 237.91 100.949 238.196 101.599 238.586C102.197 239.002 102.665 239.47 103.029 239.99C103.367 240.536 103.549 241.108 103.549 241.68ZM100.299 241.68C100.299 241.16 99.9606 240.718 99.3366 240.406C98.6866 240.094 97.8546 239.938 96.8406 239.938C95.8786 239.938 95.0986 240.094 94.4746 240.406C93.8506 240.718 93.5386 241.16 93.5386 241.68C93.5386 242.2 93.8506 242.616 94.4746 242.876C95.0986 243.188 95.8786 243.318 96.8406 243.318C97.8546 243.318 98.6866 243.188 99.3366 242.902C99.9606 242.642 100.299 242.226 100.299 241.68ZM109.113 253.25H105.889V229.746H109.113V239.522H112.233V242.382H109.113V253.25ZM117.742 233.568V230.682H120.966V233.282C120.94 235.258 121.434 236.87 122.422 238.118C123.566 239.6 124.84 240.796 126.244 241.706L124.164 243.63C122.812 242.694 121.72 241.758 120.888 240.796C120.212 240.068 119.744 239.47 119.458 238.976C119.25 239.392 118.912 239.886 118.444 240.51C117.3 241.966 115.974 243.24 114.518 244.28L112.308 242.356C114.18 240.952 115.558 239.522 116.494 238.014C117.326 236.714 117.742 235.232 117.742 233.568ZM134.538 244.306H131.366V238.352H129.494V243.682H126.348V230.084H129.494V235.648H131.366V229.746H134.538V244.306ZM125.698 253.822C124.554 253.822 123.41 253.744 122.266 253.562C121.096 253.406 120.108 253.094 119.276 252.626C118.496 252.184 117.872 251.664 117.404 251.066C116.936 250.494 116.702 249.844 116.702 249.116C116.702 248.388 116.91 247.712 117.378 247.088C117.82 246.516 118.444 245.996 119.276 245.554C120.056 245.138 121.044 244.8 122.24 244.592C123.384 244.384 124.554 244.28 125.698 244.28C126.868 244.28 128.038 244.384 129.234 244.592C130.378 244.8 131.366 245.138 132.198 245.554C133.004 245.996 133.654 246.516 134.122 247.088C134.59 247.712 134.824 248.388 134.824 249.116C134.824 249.844 134.59 250.52 134.122 251.092C133.628 251.69 132.978 252.21 132.198 252.626C131.366 253.042 130.378 253.354 129.234 253.536C128.038 253.744 126.868 253.822 125.698 253.822ZM125.698 251.144C126.53 251.144 127.362 251.092 128.194 250.988C128.974 250.884 129.624 250.728 130.118 250.52C130.586 250.312 130.924 250.104 131.184 249.844C131.392 249.636 131.522 249.376 131.522 249.116C131.522 248.804 131.392 248.544 131.184 248.31C130.924 248.102 130.586 247.868 130.118 247.634C129.598 247.452 128.974 247.296 128.194 247.14C127.414 247.036 126.582 246.958 125.698 246.958C124.84 246.958 124.034 247.036 123.254 247.14C122.474 247.296 121.824 247.452 121.356 247.634C120.862 247.842 120.524 248.076 120.316 248.284C120.082 248.544 119.978 248.804 119.978 249.116C119.978 249.376 120.082 249.636 120.316 249.844C120.524 250.104 120.862 250.312 121.356 250.52C121.824 250.728 122.474 250.884 123.28 250.988C124.06 251.092 124.866 251.144 125.698 251.144ZM150.681 242.798H138.669V231.28H150.681V233.1H154.737V229.746H157.961V244.306H154.737V240.952H150.681V242.798ZM150.681 235.726V238.326H154.737V235.726H150.681ZM147.431 240.068V234.01H141.919V240.068H147.431ZM155.335 248.934C155.335 248.622 155.205 248.31 154.997 248.05C154.737 247.816 154.373 247.582 153.853 247.374C153.333 247.166 152.709 247.01 151.981 246.854C151.227 246.75 150.473 246.672 149.719 246.672C148.991 246.672 148.237 246.75 147.483 246.854C146.703 247.01 146.079 247.166 145.637 247.374C145.169 247.582 144.831 247.816 144.597 248.05C144.337 248.31 144.207 248.622 144.207 248.934C144.207 249.272 144.311 249.558 144.571 249.818C144.779 250.078 145.143 250.312 145.637 250.52C146.105 250.728 146.703 250.884 147.483 250.962C148.237 251.066 148.991 251.118 149.719 251.118C150.473 251.118 151.227 251.066 151.981 250.962C152.709 250.884 153.333 250.728 153.853 250.52C154.321 250.338 154.711 250.104 154.971 249.818C155.205 249.558 155.335 249.272 155.335 248.934ZM158.611 248.934C158.611 249.688 158.377 250.364 157.935 250.962C157.467 251.586 156.843 252.106 156.089 252.522C155.309 252.99 154.373 253.302 153.229 253.51C152.059 253.718 150.889 253.822 149.719 253.822C148.575 253.822 147.431 253.718 146.287 253.51C145.143 253.302 144.181 252.99 143.427 252.522C142.621 252.106 141.997 251.586 141.581 250.962C141.139 250.364 140.931 249.688 140.931 248.934C140.931 248.206 141.139 247.53 141.581 246.906C141.997 246.308 142.621 245.788 143.427 245.32C144.181 244.904 145.143 244.592 146.287 244.332C147.431 244.124 148.575 243.994 149.719 243.994C150.889 243.994 152.059 244.124 153.229 244.332C154.373 244.592 155.309 244.904 156.089 245.32C156.843 245.788 157.467 246.308 157.935 246.906C158.377 247.53 158.611 248.206 158.611 248.934ZM182.592 231.15V233.724C182.592 236.376 181.396 238.742 179.004 240.822C176.612 242.876 173.7 244.306 170.242 245.138L168.63 242.772C171.75 241.914 174.272 240.744 176.196 239.236C178.172 237.728 179.186 236.168 179.186 234.608V233.906H170.45V231.15H182.592ZM188.624 229.746V237H192.186V239.808H188.624V247.712H185.426V229.746H188.624ZM189.3 253.25H172.764V245.32H176.04V250.494H189.3V253.25ZM193.769 241.914H196.317L196.187 234.842H199.385L199.515 241.914H200.373C201.153 241.914 201.907 241.914 202.635 241.888L202.765 234.842H205.963L205.833 241.758C206.977 241.706 208.199 241.602 209.499 241.472V244.176C206.665 244.488 203.571 244.618 200.191 244.618H193.769V241.914ZM193.899 231.202H208.225V233.932H193.899V231.202ZM214.309 229.746V247.712H211.189V241.108H208.355V238.378H211.189V236.532H208.355V233.776H211.189V229.746H214.309ZM215.037 253.25H197.799V245.84H200.971V250.494H215.037V253.25ZM237.551 234.738H219.533V231.956H237.551V234.738ZM238.071 241.03V243.734H230.115V248.414H240.229V251.17H216.855V248.414H226.969V243.734H218.987V241.03H222.679L222.549 235.674H225.695L225.825 241.03H231.181L231.337 235.674H234.483L234.353 241.03H238.071ZM242.124 236.22H249.014C249.17 235.674 249.274 235.128 249.274 234.582V233.906H242.254V231.15H252.472V233.464C252.472 234.4 252.368 235.258 252.186 236.064H254.578V230.084H257.698V243.942H254.578V238.794H251.484V238.092C250.964 239.184 250.236 240.172 249.352 241.082C247.376 243.006 245.036 244.384 242.332 245.216L240.46 243.006C242.93 242.278 245.036 241.134 246.804 239.522C247.064 239.314 247.272 239.054 247.48 238.794H242.124V236.22ZM259.258 229.746H262.456V245.658H259.258V229.746ZM254.5 244.28C254.5 245.918 255.254 247.322 256.788 248.466C258.4 249.688 260.48 250.572 263.08 251.118L261.26 253.588C258.894 253.068 256.684 252.08 254.604 250.598C253.824 250.026 253.226 249.454 252.836 248.882C252.394 249.454 251.77 250.026 250.99 250.598C248.884 252.08 246.674 253.068 244.334 253.588L242.436 251.118C245.062 250.572 247.168 249.688 248.78 248.466C250.34 247.322 251.146 245.918 251.146 244.28V244.15H254.5V244.28ZM277.143 248.44C275.011 248.752 272.749 248.908 270.357 248.908H266.145V238.69H272.073V234.478H266.145V231.748H275.297V241.394H269.395V246.178H270.825C272.827 246.178 274.933 246.022 277.143 245.71V248.44ZM286.529 253.25H283.331V229.746H286.529V253.25ZM278.599 230.24H281.719V252.444H278.599V241.342H275.999V238.612H278.599V230.24ZM298.591 234.66V235.96C298.591 238.04 299.267 240.068 300.619 241.992C301.581 243.448 303.037 245.06 304.987 246.776L302.699 248.7C300.723 246.984 299.137 245.216 297.889 243.396C297.525 242.876 297.239 242.46 297.057 242.122C296.849 242.486 296.537 243.006 296.147 243.63C294.509 246.022 292.871 247.842 291.207 249.09L288.867 247.244C290.687 245.684 292.195 243.994 293.339 242.226C294.665 240.276 295.341 238.196 295.341 235.96V234.66H290.193V231.878H303.635V234.66H298.591ZM309.589 229.746V253.25H306.391V240.588H301.165V237.832H306.391V229.746H309.589ZM318.712 231.748V235.7H329.918V231.748H333.168V244.618H325.888V248.414H336.002V251.17H312.628V248.414H322.742V244.618H315.462V231.748H318.712ZM318.712 238.43V241.888H329.918V238.43H318.712ZM351.885 235.856H337.273V233.308H351.885V235.856ZM348.505 232.58H340.653V230.032H348.505V232.58ZM351.105 240.458C351.105 241.004 350.923 241.524 350.559 242.018C350.195 242.538 349.727 242.98 349.155 243.318C348.557 243.682 347.855 243.942 347.075 244.098C346.243 244.254 345.411 244.332 344.553 244.332C343.721 244.332 342.889 244.254 342.109 244.072C341.277 243.916 340.601 243.682 340.029 243.318C339.457 242.98 338.989 242.538 338.677 242.018C338.313 241.524 338.157 241.004 338.157 240.458C338.157 239.912 338.313 239.392 338.651 238.872C338.963 238.378 339.431 237.936 340.029 237.546C340.601 237.182 341.303 236.896 342.109 236.714C342.889 236.558 343.721 236.454 344.553 236.454C345.411 236.454 346.243 236.558 347.049 236.714C347.829 236.922 348.531 237.182 349.155 237.546C349.727 237.91 350.221 238.326 350.585 238.846C350.923 239.366 351.105 239.912 351.105 240.458ZM347.829 240.458C347.829 240.042 347.543 239.704 346.971 239.418C346.399 239.158 345.593 239.002 344.553 239.002C343.565 239.002 342.785 239.132 342.265 239.392C341.693 239.678 341.433 240.042 341.433 240.458C341.433 240.822 341.693 241.134 342.239 241.394C342.759 241.654 343.513 241.784 344.553 241.784C345.567 241.784 346.373 241.654 346.971 241.394C347.543 241.134 347.829 240.822 347.829 240.458ZM357.709 229.746V244.618H354.485V240.432H351.417V237.624H354.485V229.746H357.709ZM354.459 248.05H344.657V250.598H354.459V248.05ZM357.735 253.25H341.407V245.424H357.735V253.25Z" fill="white"/>
+<path d="M87.5715 271.728C87.5715 273.216 88.1475 274.48 89.3315 275.504C90.3235 276.4 91.5555 277.104 92.9955 277.6L92.1315 278.704C90.6915 278.224 89.3635 277.44 88.1475 276.352C87.5875 275.856 87.1395 275.344 86.8035 274.8C86.3875 275.44 85.9555 275.952 85.5235 276.352C84.3555 277.408 83.0275 278.192 81.5395 278.704L80.6755 277.6C82.0675 277.12 83.2835 276.448 84.3395 275.584C85.5235 274.592 86.1155 273.36 86.1155 271.888V270.656H87.5715V271.728ZM93.7475 281.248V282.496H79.9395V281.248H93.7475ZM106.818 272.368H96.3379V271.136H106.818V272.368ZM107.154 276.704V277.904H102.274V281.248H108.482V282.496H94.6739V281.248H100.882V277.904H95.9859V276.704H98.2579L98.1779 273.28H99.5379L99.6179 276.704H103.506L103.586 273.28H104.946L104.85 276.704H107.154ZM121.536 274.016H117.04C117.232 274.88 117.744 275.616 118.608 276.224C119.6 276.992 120.8 277.568 122.176 277.952L121.392 278.976C119.984 278.64 118.736 278.032 117.648 277.168C117.152 276.8 116.704 276.352 116.288 275.824C115.872 276.4 115.424 276.848 114.944 277.184C113.824 278.048 112.576 278.64 111.2 278.976L110.416 277.936C111.776 277.536 112.96 276.976 113.968 276.256C114.832 275.632 115.36 274.88 115.568 274.016H111.088V272.8H121.536V274.016ZM119.12 271.52H113.504V270.272H119.12V271.52ZM123.216 281.248V282.496H109.408V281.248H123.216ZM131.935 271.008V272.512C131.935 274.48 131.215 276.272 129.775 277.872C128.351 279.392 126.847 280.48 125.263 281.12L124.335 280.096C126.063 279.312 127.487 278.304 128.591 277.056C129.807 275.648 130.431 274.288 130.431 273.008V272.256H125.071V271.008H131.935ZM135.535 269.76V275.152H137.871V276.48H135.535V283.776H134.111V269.76H135.535ZM151.572 273.504C151.572 273.952 151.476 274.368 151.284 274.768C151.076 275.184 150.804 275.536 150.468 275.824C150.116 276.128 149.732 276.368 149.284 276.528C148.836 276.704 148.356 276.784 147.86 276.784C147.348 276.784 146.884 276.704 146.436 276.528C145.988 276.368 145.588 276.128 145.252 275.824C144.932 275.536 144.676 275.184 144.484 274.768C144.276 274.368 144.18 273.952 144.18 273.504C144.18 273.056 144.276 272.64 144.484 272.224C144.676 271.84 144.932 271.488 145.252 271.168C145.588 270.88 145.988 270.64 146.436 270.448C146.884 270.288 147.348 270.192 147.86 270.192C148.356 270.192 148.836 270.288 149.284 270.448C149.732 270.64 150.116 270.88 150.468 271.168C150.804 271.488 151.076 271.84 151.284 272.224C151.476 272.64 151.572 273.056 151.572 273.504ZM150.148 273.504C150.148 272.944 149.924 272.448 149.476 272.016C149.028 271.6 148.484 271.392 147.86 271.392C147.22 271.392 146.692 271.6 146.26 272.016C145.812 272.448 145.604 272.944 145.604 273.504C145.604 274.08 145.812 274.56 146.26 274.96C146.692 275.376 147.22 275.584 147.86 275.584C148.484 275.584 149.028 275.376 149.476 274.96C149.924 274.56 150.148 274.08 150.148 273.504ZM156.196 269.76V277.04H154.804V269.76H156.196ZM156.484 283.776H146.772V280.208H154.788V278.944H146.772V277.808H156.212V281.328H148.228V282.624H156.484V283.776ZM163.714 271.792C163.714 273.008 164.13 274.064 164.962 274.96C165.666 275.728 166.514 276.352 167.506 276.848L166.658 277.776C165.698 277.328 164.77 276.64 163.874 275.712C163.586 275.424 163.314 275.088 163.074 274.72C162.802 275.168 162.514 275.568 162.226 275.888C161.298 276.912 160.338 277.68 159.362 278.176L158.418 277.232C159.41 276.72 160.274 276.048 161.01 275.216C161.842 274.304 162.274 273.232 162.274 271.984V270.336H163.714V271.792ZM170.386 278.24H168.978V269.76H170.386V273.312H172.482V274.592H170.386V278.24ZM169.362 281.376C169.362 281.152 169.25 280.928 169.058 280.72C168.834 280.528 168.578 280.368 168.29 280.24C167.97 280.112 167.554 280.016 167.074 279.92C166.578 279.84 166.098 279.792 165.618 279.792C165.122 279.792 164.626 279.84 164.13 279.92C163.618 280.016 163.218 280.112 162.946 280.24C162.626 280.4 162.386 280.56 162.21 280.752C162.018 280.944 161.922 281.152 161.922 281.376C161.922 281.6 162.002 281.808 162.194 282.016C162.354 282.24 162.61 282.4 162.946 282.528C163.298 282.656 163.698 282.752 164.178 282.816C164.642 282.88 165.122 282.912 165.618 282.912C166.098 282.912 166.578 282.88 167.058 282.816C167.522 282.752 167.938 282.656 168.29 282.528C168.61 282.4 168.882 282.24 169.074 282.016C169.266 281.808 169.362 281.6 169.362 281.376ZM170.786 281.376C170.786 281.792 170.658 282.176 170.402 282.496C170.146 282.832 169.794 283.12 169.346 283.376C168.898 283.648 168.338 283.84 167.666 283.952C166.978 284.08 166.29 284.144 165.618 284.144C164.914 284.144 164.242 284.08 163.586 283.952C162.914 283.84 162.354 283.648 161.906 283.392C161.458 283.136 161.106 282.832 160.866 282.496C160.61 282.176 160.498 281.792 160.498 281.376C160.498 280.96 160.61 280.576 160.866 280.24C161.106 279.92 161.458 279.616 161.906 279.36C162.354 279.104 162.914 278.896 163.586 278.768C164.242 278.64 164.914 278.576 165.618 278.576C166.29 278.576 166.978 278.64 167.666 278.768C168.338 278.896 168.898 279.104 169.346 279.36C169.778 279.616 170.13 279.92 170.402 280.24C170.658 280.592 170.786 280.96 170.786 281.376ZM174.177 276.032C174.177 274.592 174.529 273.36 175.249 272.304C175.985 271.264 176.865 270.736 177.921 270.736C178.945 270.736 179.841 271.264 180.609 272.304C181.345 273.328 181.713 274.576 181.713 276.032C181.713 277.472 181.345 278.704 180.609 279.744C179.889 280.768 178.993 281.28 177.921 281.28C176.865 281.28 175.985 280.768 175.249 279.744C174.529 278.72 174.177 277.488 174.177 276.032ZM175.585 276.032C175.585 277.072 175.777 277.984 176.193 278.784C176.673 279.632 177.249 280.048 177.921 280.048C178.593 280.048 179.169 279.632 179.649 278.784C180.081 277.968 180.305 277.056 180.305 276.032C180.305 274.96 180.081 274.048 179.665 273.28C179.153 272.416 178.577 271.968 177.921 271.968C177.217 271.968 176.641 272.416 176.193 273.28C175.777 274.08 175.585 275.008 175.585 276.032ZM185.729 269.76V283.776H184.337V269.76H185.729ZM196.911 280.768C195.407 280.992 193.663 281.104 191.711 281.104H188.895V275.264H193.871V272.224H188.895V271.008H195.295V276.48H190.319V279.888H191.631C193.631 279.888 195.391 279.792 196.911 279.568V280.768ZM199.711 269.76V275.168H201.967V276.496H199.711V283.776H198.287V269.76H199.711ZM210.797 277.712H204.013V270.704H210.797V272.048H213.885V269.76H215.309V280.368H213.885V276.576H210.797V277.712ZM210.797 273.2V275.424H213.885V273.2H210.797ZM209.405 276.496V271.92H205.421V276.496H209.405ZM215.693 283.776H205.709V279.392H207.149V282.544H215.693V283.776ZM227.699 272.832C227.699 274.512 228.083 275.936 228.851 277.12C229.587 278.208 230.467 279.152 231.523 279.92L230.547 280.784C229.555 280.048 228.595 279.024 227.667 277.744C227.443 277.456 227.219 277.088 226.995 276.624C226.739 277.136 226.515 277.568 226.307 277.92C225.539 279.136 224.563 280.192 223.395 281.104L222.339 280.208C223.395 279.424 224.291 278.448 225.059 277.296C225.859 276.096 226.259 274.56 226.259 272.704V270.816H227.699V272.832ZM234.147 269.76V274.864H236.483V276.192H234.147V283.776H232.723V269.76H234.147ZM249.441 271.008V273.984C249.441 275.808 249.201 277.568 248.737 279.264H247.313C247.777 277.824 248.017 276.096 248.017 274.112V272.24H239.073V271.008H249.441ZM251.185 282.496H237.377V281.248H242.673V276.096H244.081V281.248H251.185V282.496ZM254.303 270.304V272.304H258.399V270.304H259.807V276.656H252.895V270.304H254.303ZM254.303 273.456V275.488H258.399V273.456H254.303ZM263.839 277.152H262.431V269.76H263.839V272.88H265.935V274.16H263.839V277.152ZM264.111 283.776H254.575V280.208H262.415V278.944H254.575V277.808H263.855V281.328H256.015V282.624H264.111V283.776ZM269.838 272.064V270.336H271.246V271.744C271.246 273.024 271.55 274.064 272.174 274.848C272.846 275.712 273.598 276.416 274.414 276.96L273.486 277.792C272.83 277.344 272.238 276.816 271.71 276.24C271.358 275.856 270.99 275.376 270.606 274.816C270.318 275.328 270.03 275.744 269.758 276.08C269.086 276.944 268.366 277.648 267.582 278.192L266.574 277.328C267.63 276.56 268.446 275.712 269.038 274.784C269.566 273.936 269.838 273.024 269.838 272.064ZM279.598 278.272H278.222V274.592H276.494V277.872H275.134V269.984H276.494V273.392H278.222V269.76H279.598V278.272ZM274.446 284.144C273.758 284.144 273.07 284.08 272.382 283.952C271.678 283.84 271.118 283.664 270.67 283.424C270.206 283.2 269.854 282.912 269.598 282.56C269.326 282.24 269.198 281.856 269.198 281.44C269.198 281.04 269.326 280.672 269.582 280.32C269.838 280 270.19 279.696 270.67 279.44C271.118 279.184 271.678 279.008 272.382 278.88C273.07 278.768 273.758 278.704 274.446 278.704C275.15 278.704 275.838 278.768 276.542 278.88C277.214 279.008 277.79 279.184 278.27 279.44C278.75 279.696 279.118 280 279.374 280.32C279.63 280.672 279.758 281.04 279.758 281.44C279.758 281.856 279.63 282.24 279.374 282.56C279.102 282.896 278.734 283.184 278.27 283.408C277.79 283.664 277.214 283.84 276.542 283.952C275.838 284.08 275.15 284.144 274.446 284.144ZM274.446 282.912C274.99 282.912 275.518 282.88 276.046 282.8C276.558 282.736 276.99 282.64 277.326 282.512C277.614 282.384 277.87 282.224 278.062 282.032C278.238 281.856 278.334 281.664 278.334 281.44C278.334 281.216 278.238 281.008 278.078 280.832C277.886 280.672 277.63 280.512 277.31 280.352C276.958 280.208 276.542 280.096 276.046 280.016C275.534 279.952 275.006 279.92 274.446 279.92C273.902 279.92 273.374 279.952 272.878 280.016C272.366 280.096 271.95 280.208 271.63 280.352C271.278 280.512 271.038 280.672 270.878 280.832C270.718 281.008 270.638 281.216 270.638 281.44C270.638 281.664 270.718 281.856 270.878 282.016C271.038 282.208 271.278 282.368 271.63 282.512C271.95 282.656 272.366 282.752 272.894 282.816C273.406 282.88 273.918 282.912 274.446 282.912ZM298.707 271.552H294.243C294.467 272.32 294.995 272.96 295.859 273.472C296.787 274.08 297.955 274.528 299.331 274.848L298.563 275.856C297.235 275.6 295.987 275.088 294.819 274.304C294.371 274.016 293.939 273.632 293.523 273.168C293.107 273.648 292.659 274.032 292.211 274.32C291.027 275.088 289.795 275.6 288.483 275.856L287.683 274.832C289.091 274.512 290.243 274.064 291.155 273.488C292.003 272.976 292.547 272.32 292.787 271.552H288.355V270.336H298.707V271.552ZM300.435 276.832V278.048H286.627V276.832H300.435ZM298.691 284.064H297.267V280.656H288.259V279.456H298.691V284.064ZM306.753 272.832C306.753 274.512 307.137 275.936 307.905 277.12C308.641 278.208 309.521 279.152 310.577 279.92L309.601 280.784C308.577 280.048 307.617 279.024 306.705 277.744C306.481 277.456 306.241 277.088 306.017 276.624C305.793 277.136 305.553 277.568 305.329 277.92C304.577 279.072 303.617 280.128 302.449 281.104L301.393 280.208C302.449 279.424 303.345 278.448 304.113 277.296C304.913 276.096 305.313 274.56 305.313 272.704V270.816H306.753V272.832ZM313.697 269.76V283.776H312.305V269.76H313.697ZM319.264 271.008V273.424H326.736V271.008H328.16V278.448H323.696V281.248H329.904V282.496H316.096V281.248H322.304V278.448H317.84V271.008H319.264ZM319.264 274.64V277.232H326.736V274.64H319.264ZM336.014 272.272C336.014 273.296 336.43 274.24 337.278 275.104C337.902 275.776 338.718 276.352 339.742 276.848L338.91 277.776C337.918 277.328 336.99 276.656 336.126 275.76C335.87 275.552 335.598 275.232 335.31 274.816C335.15 275.168 334.83 275.584 334.382 276.032C333.518 276.928 332.622 277.632 331.678 278.176L330.75 277.248C331.742 276.688 332.574 276.064 333.214 275.376C334.126 274.448 334.59 273.408 334.59 272.272V271.856H331.438V270.656H339.118V271.856H336.014V272.272ZM342.558 278.24H341.15V269.76H342.558V273.312H344.654V274.592H342.558V278.24ZM341.534 281.376C341.534 281.152 341.422 280.928 341.23 280.72C341.006 280.528 340.75 280.368 340.462 280.24C340.142 280.112 339.726 280.016 339.246 279.92C338.75 279.84 338.27 279.792 337.79 279.792C337.294 279.792 336.798 279.84 336.302 279.92C335.79 280.016 335.39 280.112 335.118 280.24C334.798 280.4 334.558 280.56 334.382 280.752C334.19 280.944 334.094 281.152 334.094 281.376C334.094 281.6 334.174 281.808 334.366 282.016C334.526 282.24 334.782 282.4 335.118 282.528C335.47 282.656 335.87 282.752 336.35 282.816C336.814 282.88 337.294 282.912 337.79 282.912C338.27 282.912 338.75 282.88 339.23 282.816C339.694 282.752 340.11 282.656 340.462 282.528C340.782 282.4 341.054 282.24 341.246 282.016C341.438 281.808 341.534 281.6 341.534 281.376ZM342.958 281.376C342.958 281.792 342.83 282.176 342.574 282.496C342.318 282.832 341.966 283.12 341.518 283.376C341.07 283.648 340.51 283.84 339.838 283.952C339.15 284.08 338.462 284.144 337.79 284.144C337.086 284.144 336.414 284.08 335.758 283.952C335.086 283.84 334.526 283.648 334.078 283.392C333.63 283.136 333.278 282.832 333.038 282.496C332.782 282.176 332.67 281.792 332.67 281.376C332.67 280.96 332.782 280.576 333.038 280.24C333.278 279.92 333.63 279.616 334.078 279.36C334.526 279.104 335.086 278.896 335.758 278.768C336.414 278.64 337.086 278.576 337.79 278.576C338.462 278.576 339.15 278.64 339.838 278.768C340.51 278.896 341.07 279.104 341.518 279.36C341.95 279.616 342.302 279.92 342.574 280.24C342.83 280.592 342.958 280.96 342.958 281.376Z" fill="#F5F5F5"/>
+<defs>
+<filter id="filter0_d_6502_144721" x="0" y="0" width="424" height="348" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="2"/>
+<feGaussianBlur stdDeviation="8"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_6502_144721"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_6502_144721" result="shape"/>
+</filter>
+<clipPath id="clip0_6502_144721">
+<rect width="197" height="224" fill="white" transform="translate(129 14)"/>
+</clipPath>
+</defs>
+</svg>
+</template>
+
+<script>
+const SLIDES = [
+  { title: 'e건강+간강보험',         src: './svg/card_large01.svg' },
+  { title: '치매담은간병플러스보험',  src: './svg/card_large02.svg' },
+  { title: '간편포켓레저보험',        src: './svg/card_large03.svg' },
+  { title: '내 생활에 맞는 혜택',     src: './svg/card_large04.svg' },
+  { title: '한화생명 Trust',          src: './svg/card_large05.svg' },
+  { title: '카드 6',                  src: './svg/card_large06.svg' },
+  { title: '카드 7',                  src: './svg/card_large07.svg' },
+];
+
+const TOTAL = SLIDES.length;
+
+const SIDE_SCALE = 274 / 392;   // ≈ 0.6990
+
+const SLOT_X = {
+  '-2': -679,
+  '-1': -371,
+   '0':    0,
+   '1':  371,
+   '2':  679,
+};
+const HIDE_X = 1400;
+const AUTO_INTERVAL = 3000;
+
+const MOBILE_BREAKPOINT = 768;
+const VISUAL_CARD_W = 420;
+const MOBILE_CARD_SCALE = 0.8;   // 가운데 카드: PC 원본의 80% 고정
+const MOBILE_GAP = 14;            // PC와 동일한 카드 간 여백
+
+function getMobileScale() {
+  return MOBILE_CARD_SCALE;
+}
+function getMobileSideScale() {
+  return MOBILE_CARD_SCALE * SIDE_SCALE; // ≈ 0.559 (PC 비율 유지)
+}
+function getMobilePeekX() {
+  // 가운데 카드 오른쪽 끝 + 여백 + 좌우 카드 중심
+  return 210 * getMobileScale() + MOBILE_GAP + 210 * getMobileSideScale();
+}
+function isMobile() {
+  return window.innerWidth <= MOBILE_BREAKPOINT;
+}
+
+const track      = document.getElementById('track');
+const pagination = document.getElementById('pagination');
+const tmpl       = document.getElementById('tmpl-card').content.querySelector('svg');
+
+let activeIndex = 0;
+let prevActiveIndex = 0;
+let autoTimer = null;
+
+let __uid = 0;
+function uniquifyIds(svg) {
+  const suffix = `__c${++__uid}`;
+  const map = {};
+  svg.querySelectorAll('[id]').forEach(el => {
+    const old = el.getAttribute('id');
+    map[old] = old + suffix;
+    el.setAttribute('id', map[old]);
+  });
+  ['filter','clip-path','mask','fill','stroke'].forEach(attr => {
+    svg.querySelectorAll('*').forEach(el => {
+      const v = el.getAttribute(attr);
+      if (!v) return;
+      const m = v.match(/url\(#([^)]+)\)/);
+      if (m && map[m[1]]) el.setAttribute(attr, v.replace(`#${m[1]}`, `#${map[m[1]]}`));
+    });
+  });
+}
+
+const cards = SLIDES.map((slide, i) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.index = i;
+
+  const img = document.createElement('img');
+  img.src = slide.src;
+  img.alt = slide.title;
+  card.appendChild(img);
+
+  card.addEventListener('click', () => {
+    if (i !== activeIndex) goTo(i);
+  });
+
+  track.appendChild(card);
+  return card;
+});
+
+const dots = SLIDES.map((_, i) => {
+  const d = document.createElement('button');
+  d.className = 'dot';
+  d.setAttribute('aria-label', `슬라이드 ${i + 1}`);
+  d.addEventListener('click', () => goTo(i));
+  pagination.appendChild(d);
+  return d;
+});
+
+function render() {
+  const mobile = isMobile();
+  const centerScale = mobile ? getMobileScale() : 1;
+  const sideScale   = mobile ? getMobileScale() : SIDE_SCALE;
+  const hideX       = mobile ? window.innerWidth : HIDE_X;
+
+  cards.forEach((card, i) => {
+    let diff = i - activeIndex;
+    if (diff >  TOTAL / 2) diff -= TOTAL;
+    if (diff < -TOTAL / 2) diff += TOTAL;
+
+    let prevDiff = i - prevActiveIndex;
+    if (prevDiff >  TOTAL / 2) prevDiff -= TOTAL;
+    if (prevDiff < -TOTAL / 2) prevDiff += TOTAL;
+
+    let x, scale, opacity, isCenter;
+
+    if (diff === 0) {
+      x = 0; scale = centerScale; opacity = 1; isCenter = true;
+    } else if (mobile && Math.abs(diff) === 1) {
+      // 모바일 peek: 좌우 1칸 카드를 화면 끝에서 살짝 노출
+      const peekX = getMobilePeekX();
+      x = diff < 0 ? -peekX : peekX;
+      scale = getMobileSideScale();
+      opacity = 0.85;
+      isCenter = false;
+    } else if (!mobile && diff >= -2 && diff <= 2) {
+      x = SLOT_X[String(diff)]; scale = sideScale; opacity = 1; isCenter = false;
+    } else {
+      x = diff < 0 ? -hideX : hideX;
+      scale = sideScale;
+      opacity = 0;
+      isCenter = false;
+    }
+
+    card.classList.toggle('is-center', isCenter);
+
+    // Wraparound: card jumps across the carousel — teleport instantly, no slide animation
+    if (prevActiveIndex !== activeIndex && Math.abs(diff - prevDiff) > 2) {
+      card.style.transition = 'none';
+      card.style.transform = `translateX(${x}px) scale(${scale})`;
+      card.style.opacity = String(opacity);
+      card.getBoundingClientRect(); // force reflow
+      requestAnimationFrame(() => { card.style.transition = ''; });
+    } else {
+      card.style.transform = `translateX(${x}px) scale(${scale})`;
+      card.style.opacity = String(opacity);
+    }
+  });
+
+  prevActiveIndex = activeIndex;
+  dots.forEach((d, i) => d.classList.toggle('active', i === activeIndex));
+  const cur = document.getElementById('ind-current');
+  if (cur) cur.textContent = activeIndex + 1;
+}
+
+function goNext() { activeIndex = (activeIndex + 1) % TOTAL; render(); }
+function goPrev() { activeIndex = (activeIndex - 1 + TOTAL) % TOTAL; render(); }
+function goTo(i)  { activeIndex = ((i % TOTAL) + TOTAL) % TOTAL; render(); restartAuto(); }
+
+function startAuto()   { stopAuto(); autoTimer = setInterval(goNext, AUTO_INTERVAL); }
+function stopAuto()    { if (autoTimer) clearInterval(autoTimer); autoTimer = null; }
+function restartAuto() { stopAuto(); startAuto(); }
+
+
+const section = document.querySelector('.carousel-section');
+section.addEventListener('mouseenter', stopAuto);
+section.addEventListener('mouseleave', startAuto);
+
+let dragStart = null;
+section.addEventListener('mousedown', e => { dragStart = e.clientX; stopAuto(); });
+window.addEventListener('mouseup', e => {
+  if (dragStart === null) return;
+  const dx = e.clientX - dragStart;
+  if (Math.abs(dx) > 50) (dx < 0 ? goNext : goPrev)();
+  dragStart = null;
+  startAuto();
+});
+section.addEventListener('touchstart', e => { dragStart = e.touches[0].clientX; stopAuto(); }, { passive: true });
+section.addEventListener('touchend',   e => {
+  if (dragStart === null) return;
+  const dx = e.changedTouches[0].clientX - dragStart;
+  if (Math.abs(dx) > 40) (dx < 0 ? goNext : goPrev)();
+  dragStart = null;
+  startAuto();
+});
+
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 80);
+});
+
+render();
+startAuto();
+
+// Carousel indicator controls
+const indTotal = document.getElementById('ind-total');
+if (indTotal) indTotal.textContent = TOTAL;
+
+const indPlay = document.getElementById('ind-play');
+let isPlaying = true;
+const PAUSE_ICON = '<img src="./svg/pause.svg" alt="">';
+const PLAY_ICON  = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.5 4.5L15 10L6.5 15.5V4.5Z" fill="#7E7C7A"/></svg>';
+if (indPlay) {
+  indPlay.addEventListener('click', () => {
+    if (isPlaying) { stopAuto(); indPlay.innerHTML = PLAY_ICON;  indPlay.setAttribute('aria-label','재생'); isPlaying = false; }
+    else           { startAuto(); indPlay.innerHTML = PAUSE_ICON; indPlay.setAttribute('aria-label','일시정지'); isPlaying = true; }
+  });
+}
+document.getElementById('ind-prev')?.addEventListener('click', () => { goPrev(); restartAuto(); });
+document.getElementById('ind-next')?.addEventListener('click', () => { goNext(); restartAuto(); });
+
+// 마우스 휠 조작
+let isHoveringCarousel = false;
+let wheelTimer = null;
+section.addEventListener('mouseenter', () => { isHoveringCarousel = true; });
+section.addEventListener('mouseleave', () => { isHoveringCarousel = false; });
+window.addEventListener('wheel', e => {
+  if (!isHoveringCarousel) return;
+  e.preventDefault();
+  if (wheelTimer) return;
+  const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+  if (delta > 5) { goNext(); restartAuto(); }
+  else if (delta < -5) { goPrev(); restartAuto(); }
+  wheelTimer = setTimeout(() => { wheelTimer = null; }, 700);
+}, { passive: false });
+
+
+// 상품 카테고리 버튼 인터랙션
+(function() {
+  const catBtns = document.querySelectorAll('.products-cat-btn');
+  const panels = document.querySelectorAll('.ins-panel');
+
+  function showPanel(idx) {
+    catBtns.forEach(b => b.classList.remove('active'));
+    catBtns[idx].classList.add('active');
+    panels.forEach(p => {
+      const isActive = p.dataset.panel == idx;
+      p.style.display = isActive ? 'contents' : 'none';
+    });
+  }
+
+  catBtns.forEach((btn, i) => {
+    btn.addEventListener('click', () => showPanel(i));
+  });
+
+  // 초기 상태: 패널 0만 표시
+  panels.forEach((p, i) => { p.style.display = i === 0 ? 'contents' : 'none'; });
+})();
+
+// 하이라이트 카드 클릭 시 콘텐츠 순환
+(function() {
+  const cards = [
+    {
+      chip: '암',
+      name: '보험료 인상없이 든든하게 암진단비 보장받는 암보험',
+      unit: '월',
+      value: '57,200원',
+      caption: '50세 남성, 100세 만기, 30년납, 5,000만원 기준'
+    },
+    {
+      chip: '대출',
+      name: '보험해지 없이 생활자금 마련하는 편리한 보험계약대출',
+      unit: '연',
+      value: '3.21~6.25%',
+      caption: '2026.06.25기준, 매월변동'
+    },
+    {
+      chip: '신탁',
+      name: '당일 입출금 가능! 단기자산 운용으로 금리변동 리스크 최소화',
+      unit: '연',
+      value: '12.6%',
+      caption: '실적배당·원금 비보장·수익률 시장금리에 따라 변동'
+    },
+    {
+      chip: '펀드',
+      name: '중국 상해 및 심천거래소에 상장된 중국 A Share주식에 직접 투자',
+      unit: '1개월 수익률',
+      value: '3.18%',
+      caption: '수수료 선취 ∙ 온라인 ∙ 일반'
+    }
+  ];
+
+  let idx = 0;
+  const card   = document.getElementById('offeringCard');
+  const chip   = document.getElementById('offeringChip');
+  const name   = document.getElementById('offeringName');
+  const unit   = document.getElementById('offeringUnit');
+  const value  = document.getElementById('offeringValue');
+  const caption= document.getElementById('offeringCaption');
+
+  if (!card) return;
+
+  card.addEventListener('click', () => {
+    idx = (idx + 1) % cards.length;
+    const d = cards[idx];
+
+    card.classList.remove('offering-switching');
+    void card.offsetWidth; // reflow to restart animation
+    card.classList.add('offering-switching');
+
+    chip.textContent    = d.chip;
+    name.textContent    = d.name;
+    unit.textContent    = d.unit;
+    value.textContent   = d.value;
+    caption.textContent = d.caption;
+
+    card.addEventListener('animationend', () => card.classList.remove('offering-switching'), { once: true });
+  });
+})();
+
+
+/* ── 디바이스 데모 ── */
+// iframe 안에서는 스크롤바 숨김
+if (window !== window.top) {
+  document.documentElement.classList.add('in-iframe');
+}
+
+// iframe 안에서는 QR 클릭 이벤트 등록 안 함
+if (window === window.top) {
+  document.querySelector('.qr-box')?.addEventListener('click', openDeviceDemo);
+}
+
+function openDeviceDemo() {
+  const frame = document.getElementById('deviceFrame');
+  if (!frame.src) frame.src = 'mobile.html';
+  document.getElementById('deviceDemoOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeDeviceDemo() {
+  document.getElementById('deviceDemoOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+</script>
+
+
+<div class="card-modal-overlay" id="cardModalOverlay">
+  <div class="card-modal" id="cardModal">
+    <img id="cardModalImg" src="" alt="">
+    <button class="card-modal-close" id="cardModalClose">✕</button>
+  </div>
+</div>
+
+<!-- ── Footer ── -->
+<footer class="site-footer">
+  <img src="./svg/footer.svg" alt="한화생명 푸터">
+</footer>
+
+<!-- ── 모바일 바텀 네비게이션 ── -->
+<div id="app-nav">
+  <img src="./svg/app_navigation.svg" alt="하단 메뉴">
+</div>
+
+<!-- ── 디바이스 데모 오버레이 ── -->
+<div id="deviceDemoOverlay" class="device-demo-overlay">
+  <button class="device-exit-btn" onclick="closeDeviceDemo()">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M7 4l-4 4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    데스크탑 보기로 돌아가기
+  </button>
+  <div class="device-shell">
+    <div class="device-screen-wrap">
+      <iframe id="deviceFrame" title="모바일 미리보기"></iframe>
+    </div>
+  </div>
+</div>
+</body>
+</html>

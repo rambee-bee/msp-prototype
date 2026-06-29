@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>한화생명 - 상품 통합전시 캐러셀</title>
+<style>
+  @font-face{font-family:'HanwhaGothic';src:url('./font/04HanwhaGothicB_OTF.otf')format('opentype');font-weight:700}
+  @font-face{font-family:'HanwhaGothic';src:url('./font/05HanwhaGothicR_OTF.otf')format('opentype');font-weight:400}
+  @font-face{font-family:'HanwhaGothic';src:url('./font/06HanwhaGothicL_OTF.otf')format('opentype');font-weight:300}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #ffffff;
+    min-height: 100vh;
+  }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    color: #1a1a1a;
+    overflow-x: hidden;
+  }
+
+  /* =========================================================
+     GNB (Global Navigation Bar)
+     ---------------------------------------------------------
+     Rendered as an inline SVG at its intrinsic size (1128 × 101).
+     Centered in a 1280px max-width container, with 40px gap to
+     the carousel below.
+     ========================================================= */
+  /* gnb styles moved to section overrides */
+
+  /* =========================================================
+     SHINHAN-STYLE FLOW CAROUSEL
+     ---------------------------------------------------------
+     Every card uses the LARGE svg (424×348 footprint, 392×316 visual).
+     Side cards are scaled down to 274/392 = 0.6990 (matches small card spec).
+     Scaling anchored to visual center → cards expand along the X axis
+     without any vertical drift.
+
+     Spacing (14px between visual bodies):
+       large ↔ small : 392/2 + 14 + 274/2 = 347px   → slot ±1
+       small ↔ small : 274/2 + 14 + 274/2 = 288px   → slot ±2 absolute = 635
+     Visual center inside large SVG: rect (16,14) of 392×316 → (212, 172)
+     ========================================================= */
+
+  .carousel-section {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    margin: 48px 0 0;
+    height: 374px;
+    overflow: hidden;
+  }
+
+  .carousel-section::before,
+  .carousel-section::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 140px;
+    pointer-events: none;
+    z-index: 15;
+  }
+  .carousel-section::before {
+    left: 0;
+    background: linear-gradient(to right,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0) 100%);
+  }
+  .carousel-section::after {
+    right: 0;
+    background: linear-gradient(to left,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0) 100%);
+  }
+
+  .carousel-track {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+  }
+
+  .card {
+    position: absolute;
+    left: -226px;
+    top: -187px;
+    width: 452px;
+    height: 374px;
+    transform-origin: 226px 187px;
+    transition:
+      transform 700ms cubic-bezier(.22, .9, .28, 1),
+      opacity   500ms ease;
+    will-change: transform;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .card.is-center { z-index: 10; }
+
+  .card img {
+    display: block;
+    position: absolute;
+    left: 16px;
+    top: 14px;
+    width: 420px;
+    height: 346px;
+    border-radius: 26px;
+    pointer-events: none;
+  }
+
+  /* ----- Pagination ----- */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 18px;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #d4d4d4;
+    cursor: pointer;
+    transition: all 350ms ease;
+    border: none;
+    padding: 0;
+  }
+  .dot.active {
+    width: 22px;
+    border-radius: 999px;
+    background: #ff7a00;
+  }
+
+
+
+  /* =========================================================
+     MOBILE LAYOUT (≤ 768px)
+     ---------------------------------------------------------
+     - Only the center card visible
+     - 20px horizontal margin from viewport edges
+     - Card aspect ratio preserved (424:348 footprint)
+     ========================================================= */
+  @media (max-width: 768px) {
+    .carousel-section {
+      height: calc((100vw - 40px) * 346 / 420);
+      min-height: 240px;
+    }
+    .carousel-section::before,
+    .carousel-section::after {
+      width: 20px;
+    }
+    .carousel-section::before {
+      background: linear-gradient(to right,
+        rgba(255,255,255,1) 0%,
+        rgba(255,255,255,0) 100%);
+    }
+    .carousel-section::after {
+      background: linear-gradient(to left,
+        rgba(255,255,255,1) 0%,
+        rgba(255,255,255,0) 100%);
+    }
+    .card {
+      transition:
+        transform 600ms cubic-bezier(.22, .9, .28, 1),
+        opacity   400ms ease;
+    }
+  }
+
+  /* =========================================================
+     SEARCH BAR
+     ========================================================= */
+  .search-section {
+    width: 100%;
+    max-width: 1128px;
+    margin: 0 auto 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+  }
+  .search-box {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 360px;
+    border: 1.5px solid #FA6600;
+    border-radius: 32px;
+    padding: 14px 22px;
+    gap: 12px;
+    background: #fff;
+    transition: max-width 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .search-box:hover {
+    max-width: 560px;
+  }
+  .search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 18px;
+    color: #555;
+    background: transparent;
+    font-family: inherit;
+  }
+  .search-box input::placeholder { color: #bbb; }
+
+  /* =========================================================
+     PRODUCTS SECTION
+     ========================================================= */
+  .products-section {
+    width: 100%;
+    max-width: 1128px;
+    margin: 80px auto 0;
+    padding: 0;
+  }
+  .section-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111;
+    text-align: center;
+    margin-bottom: 28px;
+    letter-spacing: -0.5px;
+  }
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 7px 20px;
+    border-radius: 24px;
+    border: 1.5px solid #e0e0e0;
+    font-size: 13.5px;
+    color: #666;
+    cursor: pointer;
+    background: #fff;
+    font-family: inherit;
+    font-weight: 400;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: #FA6600;
+    border-color: #FA6600;
+    color: #fff;
+    font-weight: 500;
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+  .product-card {
+    border: 1px solid #ebebeb;
+    border-radius: 16px;
+    padding: 26px 24px 22px;
+    background: #fff;
+  }
+  .card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #FFF3EC;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11.5px;
+    color: #FA6600;
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .card-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .card-desc {
+    font-size: 12.5px;
+    color: #999;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+  .card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 13px;
+    color: #FA6600;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  /* =========================================================
+     LIFETIP SECTION
+     ========================================================= */
+  .lifetip-section {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 1128px;
+    margin: 80px auto 0;
+    padding: 0;
+  }
+  .lifetip-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 100px;
+  }
+  .lifetip-title {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #272B2F;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .lifetip-more {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 16px;
+    font-weight: 300;
+    color: #272B2F;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .lifetip-more img { width: 16px; height: 16px; }
+  .lifetip-grid {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1;
+    gap: 20px;
+  }
+  .lifetip-card-svg {
+    height: auto;
+    border-radius: 15.5px;
+    cursor: pointer;
+    transition: transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 260ms ease;
+  }
+  .lifetip-card-svg:hover {
+    transform: scale(1.03);
+    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+  }
+  .section-title-left {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 24px;
+    letter-spacing: -0.5px;
+  }
+
+  /* =========================================================
+     EVENTS SECTION
+     ========================================================= */
+  /* ── Contract Section ── */
+  .contract-section {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 1128px;
+    margin: 80px auto 0;
+    padding: 0;
+  }
+  .contract-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 100px;
+  }
+  .contract-title {
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #272B2F;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .contract-more {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 16px;
+    font-weight: 300;
+    color: #272B2F;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .contract-more img {
+    width: 16px;
+    height: 16px;
+  }
+  .contract-menu {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1;
+    gap: 32px;
+  }
+  .contract-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 20px;
+    transition: transform 260ms ease, box-shadow 260ms ease;
+  }
+  .contract-menu-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+  }
+  .contract-menu-item img {
+    width: 100px;
+    height: 100px;
+    border-radius: 20px;
+  }
+
+  .events-section {
+    width: 100%;
+    max-width: 1128px;
+    margin: 80px auto 80px;
+    padding: 0;
+  }
+  .event-cards {
+    display: flex;
+    gap: 16px;
+  }
+  .event-card {
+    flex: 1;
+    border-radius: 22px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 140px;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .event-card.purple { background: linear-gradient(135deg,#7B5FBA 0%,#9B7FD4 100%); }
+  .event-card.beige  { background: linear-gradient(135deg,#C5B49C 0%,#D8CDB8 100%); }
+  .event-text h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+  .event-text p {
+    font-size: 12px;
+    color: rgba(255,255,255,0.82);
+    line-height: 1.6;
+  }
+  .event-illust {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    flex-shrink: 0;
+  }
+  .event-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .event-nav-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+  }
+  .event-nav span { font-size: 12px; color: #aaa; }
+
+
+/* ── SVG section overrides ── */
+.mobile-statusbar { display: none; }
+  .mobile-header { display: none; }
+
+.gnb-sub {
+  width: 100%;
+  background: #fff;
+  position: relative;
+  z-index: 101;
+  will-change: transform, opacity;
+}
+.gnb-main {
+  width: 100%;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: box-shadow 200ms ease;
+}
+.gnb-sub img {
+  display: block;
+  width: 100%;
+  max-width: 1128px;
+  height: auto;
+  margin: 0 auto;
+}
+.gnb-main-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1128px;
+  height: 68px;
+  margin: 0 auto;
+}
+.gnb-logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+.gnb-logo img {
+  height: 36px;
+  width: auto;
+  display: block;
+}
+.gnb-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 48px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.gnb-menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 68px;
+}
+.gnb-menu-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #F37321;
+  transition: width 220ms ease;
+}
+.gnb-menu-item:hover::after {
+  width: 100%;
+}
+.gnb-menu-item > a {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  color: #000;
+  text-decoration: none;
+  white-space: nowrap;
+  display: block;
+  transition: color 200ms ease;
+}
+.gnb-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.gnb-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: #272B2F;
+  transition: color 200ms ease;
+}
+.gnb-icon-btn:hover {
+  color: #F37321;
+}
+
+/* ── Mega Menu ── */
+.gnb-main-wrap {
+  position: relative;
+  width: 100%;
+}
+.gnb-mega {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  border-top: 1px solid #E5E5E5;
+  pointer-events: none;
+  clip-path: inset(0 0 101% 0);
+  transition: clip-path 1200ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 200;
+  overflow: hidden;
+}
+.gnb-mega--auto {
+  height: auto;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  padding-bottom: 52px;
+}
+.gnb-mega-row-divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: #E5E5E5;
+  margin: 32px 0;
+}
+.gnb-l2-list li a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.gnb-l2-sub-icon {
+  flex-shrink: 0;
+  opacity: 0.45;
+}
+.gnb-mega.open {
+  pointer-events: auto;
+  clip-path: inset(0 0 0% 0);
+}
+.gnb-dim-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+  z-index: 99;
+}
+.gnb-dim-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.gnb-mega-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1128px;
+  margin: 0 auto;
+  padding: 60px 0 100px;
+  gap: 0;
+}
+.gnb-mega-bottom-line {
+  height: 1px;
+  background: #E5E5E5;
+  margin-top: 52px;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+.gnb-mega-cols {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0 24px;
+  width: 100%;
+}
+.gnb-l2-group {
+  min-width: 0;
+  width: 100%;
+}
+.gnb-l2-cat {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  color: #272B2F;
+  margin: 0 0 16px 0;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  display: block;
+}
+.gnb-l2-cat a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #272B2F;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+.gnb-l2-cat a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.gnb-l2-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gnb-l2-list li a {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 150%;
+  color: #5E5C5A;
+  text-decoration: none;
+}
+.gnb-mega-finder {
+  margin-top: 28px;
+  padding-top: 28px;
+  border-top: 1px solid #E5E5E5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.gnb-product-text-btns {
+  display: flex;
+  align-items: flex-start;
+  gap: 60px;
+}
+.gnb-text-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.gnb-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #272B2F;
+  text-decoration: none;
+}
+.gnb-text-btn:hover {
+  color: #FA6600;
+}
+.gnb-text-btn-group p {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.4;
+  color: #5E5C5A;
+  margin: 0;
+}
+.gnb-banner-wrap {
+  flex-shrink: 0;
+  position: relative;
+}
+.gnb-banner-track {
+  position: relative;
+  width: 364px;
+  height: 110px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.gnb-banner-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+.gnb-banner-bg.active { opacity: 1; }
+.gnb-banner-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.gnb-l2-list li a:hover {
+  color: #FA6600;
+  text-decoration: none;
+}
+
+/* ── Product Chips ── */
+.products-section { padding: 0; background: #fff; }
+.products-section .section-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 auto 48px;
+  max-width: 1128px;
+  padding: 0;
+  text-align: center;
+}
+.product-chips {
+  display: flex;
+  gap: 8px;
+  max-width: 1128px;
+  margin: 0 auto 48px;
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.chip {
+  display: flex;
+  height: 44px;
+  padding: 0 16px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 1000px;
+  background: #F0F0F0;
+  color: #403F3E;
+  border: none;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.5;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 200ms ease, color 200ms ease;
+}
+.chip.active {
+  background: #272B2F;
+  color: #fff;
+  font-weight: 300;
+}
+.chip:hover:not(.active) {
+  background: #E0E0E0;
+  color: #272B2F;
+}
+.chip:active {
+  font-weight: 300;
+}
+.product-content .tab-panel { display: none; }
+.product-content .tab-panel.active { display: block; }
+.tab-placeholder {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-size: 15px;
+  border: 2px dashed #e8e8e8;
+  border-radius: 16px;
+  margin: 0;
+}
+@media (max-width: 768px) {
+  .products-section .section-title { font-size: 18px; }
+  .product-chips { gap: 6px; padding: 0 16px; }
+  .chip { height: 44px; font-size: 18px; padding: 0 16px; background: #F0F0F0; border: none; color: #403F3E; }
+  .chip.active { background: #272B2F; color: #fff; font-weight: 300; }
+  .chip:hover:not(.active) { background: #E0E0E0; color: #272B2F; }
+  .chip:active { font-weight: 300; }
+}
+
+
+/* ── in_card grid & hover ── */
+.in-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 360px);
+  gap: 24px;
+  max-width: 1128px;
+  margin: 0 auto;
+  padding: 0 0 48px;
+}
+.in-card {
+  display: block;
+  width: 360px;
+  height: 215px;
+  border-radius: 15.5px;
+  cursor: pointer;
+  will-change: transform;
+  transform-origin: center center;
+  transition:
+    transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 260ms ease;
+}
+.in-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+}
+@media (max-width: 768px) {
+  .in-card-grid {
+    grid-template-columns: 1fr;
+    padding: 0 16px 32px;
+  }
+}
+
+/* ── Section Divider ── */
+.section-divider {
+  display: flex;
+  width: 1128px;
+  min-height: 1px;
+  max-height: 1px;
+  flex-direction: column;
+  align-items: flex-start;
+  background: #E5E5E5;
+  margin: 100px auto;
+}
+
+/* ── Product title ── */
+.product-title-wrap {
+  text-align: center;
+  margin: 0 auto 32px;
+}
+.m-br { display: none; }
+.product-title-name {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #403F3E;
+  text-align: center;
+  white-space: nowrap;
+  margin: 0;
+}
+.product-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto 48px;
+  max-width: 1128px;
+}
+
+/* ── Tab + Search Integration ── */
+.tab-search-wrap {
+  position: relative;
+  max-width: 1128px;
+  margin: 0 auto 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+}
+.tsw-chips {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  transition: opacity 260ms ease, filter 260ms ease;
+}
+.tab-search-wrap.search-open .tsw-chips {
+  opacity: 0;
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* 검색 영역 컨테이너: 전체 너비, 트리거는 우측, 확장row는 중앙 */
+.tsw-search-area {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* 기본 상태: 검색 아이콘 원형 버튼 */
+.tsw-search-trigger {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 60px;
+  height: 60px;
+  border: 1px solid #403F3E;
+  border-radius: 1000px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #272B2F;
+  flex-shrink: 0;
+  z-index: 2;
+  pointer-events: auto;
+  transition: opacity 180ms ease, transform 180ms ease, border-color 200ms ease, color 200ms ease;
+}
+.tsw-search-trigger:hover {
+  border-color: #FA6600;
+  color: #FA6600;
+}
+.tsw-search-area.open .tsw-search-trigger {
+  opacity: 0;
+  transform: scale(0.75);
+  pointer-events: none;
+}
+
+/* 확장 pill row: 우측 앵커 + overflow:hidden → width 늘어남 */
+.tsw-expand-row {
+  position: absolute;
+  right: 0;
+  top: 0;
+  overflow: hidden;
+  height: 60px;
+  width: 60px;
+  border-radius: 1000px;
+  pointer-events: none;
+  transition: width 560ms cubic-bezier(0.34, 1.12, 0.64, 1),
+              right 560ms cubic-bezier(0.34, 1.12, 0.64, 1);
+}
+.tsw-search-area.open .tsw-expand-row {
+  width: var(--tsw-open-w, 960px);
+  right: var(--tsw-open-right, 0px);
+  pointer-events: auto;
+}
+
+/* pill 등장 애니메이션 */
+@keyframes pillReveal {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.tsw-search-area.open .tsw-pill {
+  animation: pillReveal 300ms cubic-bezier(0.34, 1.3, 0.64, 1) both;
+}
+.tsw-search-area.open .tsw-consult-pill { animation-delay: 60ms; }
+.tsw-search-area.open .tsw-filter-pill  { animation-delay: 120ms; }
+.tsw-search-area.open .tsw-input-pill   { animation-delay: 210ms; }
+.tsw-search-area.open .tsw-back-pill    { animation-delay: 300ms; }
+
+/* 실제 pill flex row: 오른쪽 정렬 → 우측부터 reveal */
+.tsw-expand-inner {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  height: 60px;
+}
+
+/* 공통 pill 스타일 */
+.tsw-pill {
+  height: 60px;
+  border: 1px solid #403F3E;
+  border-radius: 1000px;
+  background: #fff;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 18px;
+  font-weight: 300;
+  color: #272B2F;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: border-color 200ms ease, color 200ms ease;
+}
+.tsw-pill:hover { border-color: #FA6600; color: #FA6600; }
+
+/* 뒤로가기/닫기 버튼 (원형) */
+.tsw-back-pill {
+  width: 60px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* 검색 입력 pill */
+.tsw-input-pill {
+  width: 470px;
+  justify-content: space-between;
+  cursor: default;
+}
+.tsw-input-pill:hover { border-color: #403F3E; color: #272B2F; }
+.tsw-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 18px;
+  font-weight: 300;
+  color: #272B2F;
+}
+.tsw-search-input::placeholder { color: #908F8E; }
+.tsw-search-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #272B2F;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+/* ── Carousel Indicator ── */
+.carousel-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 20px;
+  margin-bottom: 100px;
+}
+.ind-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 18px;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: color 150ms ease;
+}
+.ind-btn:hover { color: #272B2F; }
+.ind-play {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #555;
+}
+.ind-counter {
+  font-size: 13px;
+  color: #999;
+  min-width: 36px;
+  text-align: center;
+}
+.ind-counter strong {
+  color: #272B2F;
+  font-weight: 700;
+}
+.ind-sep { margin: 0 1px; }
+
+  .tab-panel {
+    display: none;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .tab-panel.active {
+    display: block;
+    animation: panelIn 350ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .card-modal-overlay.open {
+    display: flex;
+    animation: overlayIn 250ms ease forwards;
+  }
+  @keyframes overlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .card-modal {
+    position: relative;
+    border-radius: 32px;
+    overflow: hidden;
+    animation: modalIn 350ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    cursor: pointer;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.82); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .card-modal img { display: block; width: 560px; max-width: 90vw; height: auto; border-radius: 32px; }
+  .card-modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.35);
+    color: #fff;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+
+  .lifetip-track {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px;
+    cursor: grab;
+    scrollbar-width: none;
+  }
+  .lifetip-track::-webkit-scrollbar { display: none; }
+  .lifetip-track.grabbing { cursor: grabbing; }
+  .lifetip-card {
+    flex: 0 0 280px;
+    scroll-snap-align: start;
+    background: #F8F8F8;
+    border-radius: 20px;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: transform 250ms ease, box-shadow 250ms ease;
+  }
+  .lifetip-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.10);
+  }
+  .lt-tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #FA6600;
+    background: rgba(250,102,0,0.10);
+    border-radius: 999px;
+    padding: 4px 12px;
+    width: fit-content;
+  }
+  .lt-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.45;
+  }
+  .lt-desc {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.6;
+  }
+
+/* ════════════════════════════════════════════
+   모바일 상품 카드 (텍스트형)
+════════════════════════════════════════════ */
+.product-list { display: none; }
+.product-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid #F0F0F0;
+}
+.product-card:last-child { border-bottom: none; }
+.product-card-info { flex: 1; min-width: 0; }
+.product-cat {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #908F8E;
+  display: block;
+  margin-bottom: 4px;
+}
+.product-name {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #272B2F;
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+.product-desc {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  color: #5E5C5A;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-cta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.product-cta-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #FA6600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.product-cta-icon svg { display: block; }
+.product-cta-label {
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #5E5C5A;
+  white-space: nowrap;
+}
+
+/* ════════════════════════════════════════════
+   바텀 네비 — 데스크톱 숨김
+════════════════════════════════════════════ */
+#app-nav { display: none; }
+
+/* ── Footer ── */
+.site-footer { display: flex; justify-content: center; line-height: 0; overflow: hidden; }
+.site-footer img { display: block; width: auto; height: auto; flex-shrink: 0; }
+
+/* ════════════════════════════════════════════
+   MOBILE (≤768px)
+════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── GNB 숨김 ── */
+  .gnb-main, .gnb-sub, .gnb-dim-overlay, .gnb-mega {
+    display: none !important;
+  }
+
+  /* ── 모바일 헤더 ── */
+  .mobile-statusbar {
+    display: block;
+    line-height: 0;
+  }
+  .mobile-statusbar img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .mobile-header {
+    display: block;
+    line-height: 0;
+  }
+  .mobile-header img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* ── Footer 숨김 ── */
+  .site-footer { display: none; }
+
+  /* ── body ── */
+  body { padding-bottom: 86px; }
+
+  /* ── 바텀 네비 ── */
+  #app-nav {
+    display: block !important;
+    position: fixed;
+    bottom: 0; left: 0;
+    width: 100%;
+    z-index: 9999;
+    line-height: 0;
+    transform: translateY(0);
+    transition: transform 320ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #app-nav.nav-hidden { transform: translateY(100%); }
+  #app-nav img { width: 100%; height: auto; display: block; }
+
+  /* ── 공통: 20px 좌우 마진 ── */
+  .product-title-wrap,
+  .search-section,
+  .contract-section,
+  .lifetip-section,
+  .events-section {
+    box-sizing: border-box;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* ── 섹션 간격 ── */
+  .carousel-section   { margin-top: 24px; }
+  .contract-section   { margin-top: 70px; }
+  .lifetip-section    { margin-top: 70px; }
+  .events-section     { margin-top: 70px; margin-bottom: 70px; }
+
+  /* ── product-title ── */
+  .carousel-indicator { margin-bottom: 20px; }
+  .product-title-wrap { text-align: left; padding: 0 20px; margin: 70px 0 28px; }
+  .product-title-name { font-size: 26px; font-weight: 700; text-align: left; white-space: normal; }
+  .m-br { display: inline; }
+
+  /* ── 검색 (탭 통합형) ── */
+  .tab-search-wrap { flex-direction: column; align-items: stretch; gap: 48px; min-height: auto; padding: 0 20px; margin-bottom: 28px; }
+  .tsw-chips { overflow-x: auto; flex-wrap: nowrap; gap: 8px; margin: 0 -20px; padding: 0 20px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .tsw-chips::-webkit-scrollbar { display: none; }
+  .tsw-search-area { order: -1; position: relative; top: auto; left: auto; right: auto; transform: none; height: 60px; }
+  .tsw-search-trigger { display: none; }
+  .tsw-expand-row { position: relative; left: auto; right: auto; width: 100%; height: 60px; overflow: visible; border-radius: 0; opacity: 1; visibility: visible; pointer-events: auto; transition: none; }
+  .tsw-search-area.open .tsw-expand-row { opacity: 1; visibility: visible; }
+  .tab-search-wrap.search-open .tsw-chips { opacity: 1; pointer-events: auto; }
+  .tsw-expand-inner { position: static; height: 60px; gap: 8px; width: 100%; }
+  .tsw-pill { height: 60px; font-size: 18px; padding: 0 20px; }
+  .tsw-back-pill { display: none; }
+  .tsw-input-pill { width: auto; flex: 1; min-width: 0; }
+  .tsw-filter-pill { display: flex; width: 60px; padding: 0; justify-content: center; flex-shrink: 0; }
+  .tsw-consult-pill { display: flex; width: 60px; padding: 0; justify-content: center; flex-shrink: 0; }
+  .tsw-pill-text { display: none; }
+
+  /* ── 칩스: 좌측 20px, 우측 오픈 스크롤 ── */
+  .products-section { padding: 0; max-width: 100%; }
+  .product-chips-wrap {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    margin: 0 0 24px;
+    max-width: 100%;
+    padding-left: 20px;
+    padding-right: 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .product-chips-wrap::-webkit-scrollbar { display: none; }
+  .chip { white-space: nowrap; flex-shrink: 0; }
+
+  /* ── 상품 카드: SVG 1열 축소 ── */
+  .product-list { display: none !important; }
+  .in-card-grid {
+    grid-template-columns: 1fr;
+    padding: 0 20px 32px;
+  }
+  .in-card { width: 100%; height: auto; }
+
+  /* ── 계약관리 ── */
+  .contract-section { flex-direction: column; align-items: flex-start; }
+  .contract-left {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 28px;
+  }
+  .contract-left .contract-title { margin-bottom: 0; }
+  .contract-menu {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    justify-items: center;
+    gap: 24px;
+    width: 100%;
+  }
+  .contract-menu-item img { width: 100%; height: auto; }
+
+  /* ── 라이프팁 ── */
+  .lifetip-section { flex-direction: column; align-items: flex-start; }
+  .lifetip-left {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 28px;
+  }
+  .lifetip-left .lifetip-title { margin-bottom: 0; }
+  .lifetip-grid {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 20px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-left: -20px;
+    margin-top: -16px;
+    margin-bottom: -16px;
+    padding: 16px 20px;
+    width: calc(100% + 20px);
+  }
+  .lifetip-grid::-webkit-scrollbar { display: none; }
+  .lifetip-card-wrap { flex-shrink: 0; width: 72vw; max-width: 284px; }
+  .lifetip-card-svg { width: 100%; height: auto; }
+
+  /* ── 이벤트 ── */
+  .events-section { flex-direction: column; align-items: flex-start; }
+  .event-banners {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    width: 100%;
+    gap: 12px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-left: -20px;
+    padding-left: 20px;
+    width: calc(100% + 20px);
+  }
+  .event-banners::-webkit-scrollbar { display: none; }
+  .event-banner-img { flex-shrink: 0; width: 80vw; max-width: 320px; }
+
+  /* ── 공지사항 + QR ── */
+  .notice-section { flex-direction: column; align-items: flex-start; gap: 28px; justify-content: flex-start; padding: 0 20px; }
+  .notice-left { width: 100%; }
+  .qr-box { display: none; }
+
+  /* ── 구분선 ── */
+  .section-divider { width: calc(100% - 40px); margin-left: 20px; margin-right: 20px; }
+  .section-divider--before-contract { display: none; }
+}
+
+/* ══════════════════════════════════════════
+   DEVICE DEMO OVERLAY
+══════════════════════════════════════════ */
+.device-demo-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #272B2F;
+  z-index: 9000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+.device-demo-overlay.active {
+  display: flex;
+  animation: deviceFadeIn 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes deviceFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.device-exit-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 100px;
+  padding: 10px 20px;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background 200ms ease, color 200ms ease;
+}
+.device-exit-btn:hover {
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+}
+.device-shell {
+  background: #1C1C1E;
+  border-radius: 52px;
+  padding: 13px;
+  box-shadow:
+    0 0 0 1.5px #3A3A3C,
+    0 0 0 3.5px #1C1C1E,
+    0 40px 100px rgba(0,0,0,0.7);
+  animation: deviceSlideUp 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes deviceSlideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+.device-screen-wrap {
+  width: 390px;
+  height: calc(100vh - 160px);
+  max-height: 780px;
+  border-radius: 42px;
+  overflow: hidden;
+  background: #fff;
+  position: relative;
+}
+.device-screen-wrap iframe {
+  width: 390px;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* iframe 내부 스크롤바 숨김 */
+html.in-iframe { scrollbar-width: none; }
+html.in-iframe::-webkit-scrollbar { display: none; }
+
+/* qr-box 클릭 커서 */
+.qr-box { cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="mobile-statusbar">
+  <img src="./svg/statusBar.svg" alt="">
+</div>
+<div class="mobile-header">
+  <img src="./svg/header/default.svg" alt="한화생명">
+</div>
+<div class="gnb-dim-overlay" id="gnbDimOverlay"></div>
+<div class="gnb-sub">
+  <img src="./svg/gnb_sub.svg" alt="">
+</div>
+<div class="gnb-main">
+  <div class="gnb-main-wrap">
+    <nav class="gnb-main-inner">
+      <a class="gnb-logo" href="./main.html">
+        <img src="./svg/CI.svg" alt="한화생명">
+      </a>
+      <ul class="gnb-menu">
+        <li class="gnb-menu-item" id="gnb-mycontract-item"><a href="#">나의계약</a></li>
+        <li class="gnb-menu-item" id="gnb-product-item"><a href="#">보험상품</a></li>
+        <li class="gnb-menu-item" id="gnb-finance-item"><a href="#">금융상품</a></li>
+        <li class="gnb-menu-item" id="gnb-events-item"><a href="#">이벤트</a></li>
+        <li class="gnb-menu-item" id="gnb-support-item"><a href="#">상담지원</a></li>
+      </ul>
+      <div class="gnb-actions">
+        <button class="gnb-icon-btn" aria-label="검색">
+          <img src="./svg/28/search.svg" width="28" height="28" alt="검색">
+        </button>
+        <button class="gnb-icon-btn" aria-label="전체메뉴">
+          <img src="./svg/28/menu-line.svg" width="28" height="28" alt="전체메뉴">
+        </button>
+      </div>
+    </nav>
+    <!-- ── Mega Menu (나의계약) ── -->
+    <div class="gnb-mega gnb-mega--auto" id="gnbMegaMyContract">
+      <div class="gnb-mega-inner">
+        <!-- 4열 그리드: 보험|대출|퇴직연금|펀드 / 신탁|고객정보관리 -->
+        <div class="gnb-mega-cols gnb-mega-cols--wrap">
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">계약조회</a></li>
+              <li><a href="#">계약변경</a></li>
+              <li><a href="#">건강체검진신청</a></li>
+              <li><a href="#">계좌신청/변경</a></li>
+              <li><a href="#">보험청약조회/철회</a></li>
+              <li><a href="#">보험계약대출</a></li>
+              <li><a href="#">보험료납입</a></li>
+              <li><a href="#">해지(해약)신청</a></li>
+              <li><a href="#">일반보험금신청</a></li>
+              <li><a href="#">중도인출신청/내역</a></li>
+              <li><a href="#">사고보험금 신청/조회</a></li>
+              <li><a href="#">자동화등록</a></li>
+              <li><a href="#">미래예상 연금액 조회</a></li>
+              <li><a href="#">펀드수익률 변동 알림서비스</a></li>
+              <li><a href="#">타사연금계좌 이체 신청/조회</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">대출</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">대출사항조회</a></li>
+              <li><a href="#">원리금납부계좌변경</a></li>
+              <li><a href="#">원리금즉시상환신청</a></li>
+              <li><a href="#">대출연기신청</a></li>
+              <li><a href="#">대출계약철회</a></li>
+              <li><a href="#">금리인하 신청 및 내역</a></li>
+              <li><a href="#">신용평가결과 대응권 신청</a></li>
+              <li><a href="#">대출채권 소멸시효 완성조회</a></li>
+              <li><a href="#">기한이익상실 예정 통지</a></li>
+              <li><a href="#">주택 경매 예정 통지</a></li>
+              <li><a href="#">채권양도 예정 통지</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">퇴직연금</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">계약정보</a></li>
+              <li><a href="#">개인부담금 납입(즉시이체)</a></li>
+              <li><a href="#">적립금운용</a></li>
+              <li><a href="#">자동이체 등록/변경</a></li>
+              <li><a href="#">상품라인업</a></li>
+              <li><a href="#">운용지시</a></li>
+              <li><a href="#">개인형IRP가입</a></li>
+              <li><a href="#">증명서발급</a></li>
+              <li><a href="#">개인형 IRP 지급청구</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">펀드</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">펀드보유내역</a></li>
+              <li><a href="#">펀드매매처리</a></li>
+              <li><a href="#">자동이체/은행/증명서</a></li>
+              <li><a href="#">고객정보/펀드계좌관리</a></li>
+            </ul>
+          </div>
+          <div class="gnb-mega-row-divider"></div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">신탁</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">신탁재산운용내역</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">고객정보관리/변경</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">회원정보관리</a></li>
+              <li><a href="#">마케팅정보관리</a></li>
+              <li><a href="#">개인정보 유출 신고</a></li>
+              <li><a href="#">나의관심상품</a></li>
+              <li><a href="#">온라인안내장</a></li>
+              <li><a href="#">금융거래내역</a></li>
+              <li><a href="#">전자서명조회</a></li>
+              <li><a href="#">증명서발급</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ── Mega Menu (보험상품) ── -->
+    <div class="gnb-mega" id="gnbMega">
+      <div class="gnb-mega-inner">
+        <!-- 보험 카테고리 -->
+        <div class="gnb-mega-cols">
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">암·건강 보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">e건강보험(암종합)다이렉트</a></li>
+              <li><a href="#">e암보험(비갱신)다이렉트</a></li>
+              <li><a href="#">e건강보험(암뇌심)다이렉트</a></li>
+              <li><a href="#">걸음e건강보험다이렉트</a></li>
+              <li><a href="#">시그니처H암보험상담</a></li>
+              <li><a href="#">H건강플러스보험상담</a></li>
+              <li><a href="#">Need AI 암보험상담</a></li>
+              <li><a href="./sub.html">치매담은간병플러스상담</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">사망·종신 보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">e정기보험다이렉트</a></li>
+              <li><a href="#">제로백H종신상담</a></li>
+              <li><a href="#">하나로H종신상담</a></li>
+              <li><a href="#">상속H종신보험상담</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">연금·저축보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">e디딤돌저축보험다이렉트</a></li>
+              <li><a href="#">e재테크저축보험다이렉트</a></li>
+              <li><a href="#">e연금저축보험다이렉트</a></li>
+              <li><a href="#">e연금보험다이렉트</a></li>
+              <li><a href="#">연금·저축보험상담</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">간편심사 보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">포켓골절보험다이렉트</a></li>
+              <li><a href="#">간편포켓골절보험</a></li>
+            </ul>
+          </div>
+        </div>
+        <!-- 텍스트 버튼 + 배너 -->
+        <div class="gnb-mega-finder">
+          <div class="gnb-product-text-btns">
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-text-btn">
+                전체상품 보기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <p>보험상품 한눈에 찾아보기</p>
+            </div>
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-text-btn">
+                보험 상담하기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <p>전문가에게 보험 상담받기</p>
+            </div>
+          </div>
+          <div class="gnb-banner-wrap">
+            <div class="gnb-banner-track" id="gnbBannerTrack">
+              <div class="gnb-banner-bg active" style="background:#F5F4F2;"></div>
+              <div class="gnb-banner-bg" style="background:#5D39EA;"></div>
+              <div class="gnb-banner-bg" style="background:#FA6600;"></div>
+              <img src="./svg/gnb_banner.svg" class="gnb-banner-svg" alt="배너">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ── Mega Menu (금융) ── -->
+    <div class="gnb-mega" id="gnbMegaFinance">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">대출</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">인터넷대출</a></li>
+              <li><a href="#">신용대출</a></li>
+              <li><a href="#">담보대출</a></li>
+              <li><a href="#">보험계약대출</a></li>
+              <li><a href="#">기타상품</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">펀드</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">국내펀드</a></li>
+              <li><a href="#">해외펀드</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">신탁</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">신탁상품</a></li>
+            </ul>
+          </div>
+        </div>
+        <!-- 텍스트 버튼 + 배너 -->
+        <div class="gnb-mega-finder">
+          <div class="gnb-product-text-btns">
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-text-btn">
+                전체상품 보기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <p>금융상품 한눈에 찾아보기</p>
+            </div>
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-text-btn">
+                자산관리 상담하기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <p>전문가와 함께하는 맞춤 자산관리</p>
+            </div>
+          </div>
+          <div class="gnb-banner-wrap">
+            <div class="gnb-banner-track">
+              <div class="gnb-banner-bg active" style="background:#F5F4F2;"></div>
+              <div class="gnb-banner-bg" style="background:#5D39EA;"></div>
+              <div class="gnb-banner-bg" style="background:#FA6600;"></div>
+              <img src="./svg/gnb_banner.svg" class="gnb-banner-svg" alt="배너">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ── Mega Menu (이벤트·혜택) ── -->
+    <div class="gnb-mega" id="gnbMegaEvents">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">이벤트</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">진행중 이벤트</a></li>
+              <li><a href="#">종료 이벤트</a></li>
+              <li><a href="#">응모한 이벤트</a></li>
+              <li><a href="#">당첨자발표</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">계약고객 혜택</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">건강증진 보험료 할인</a></li>
+              <li><a href="#">헬스케어서비스</a></li>
+              <li><a href="#">Need 암 관리</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">정보</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">라이프팁</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">안내 서비스</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">상조서비스</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ── Mega Menu (고객지원) ── -->
+    <div class="gnb-mega" id="gnbMegaSupport">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">고객상담</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">보험•금융 상담</a></li>
+              <li><a href="#">보험 리모델링 상담</a></li>
+              <li><a href="#">자산관리 상담하기</a></li>
+              <li><a href="#">일반 상담</a></li>
+              <li><a href="#">전화상담 ARS 안내</a></li>
+              <li><a href="#">자주하는 질문</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">고객지원</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">구비서류 안내</a></li>
+              <li><a href="#">보험 가입 안내</a></li>
+              <li><a href="#">지점찾기</a></li>
+              <li><a href="#">방문/전화판매원 신원조회</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">고객의소리</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">칭찬•제안•신고</a></li>
+              <li><a href="#">나의 민원</a></li>
+            </ul>
+          </div>
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">소비자포털</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">소비자포털 소개</a></li>
+              <li><a href="#">소비자보호 공시</a></li>
+              <li><a href="#">소비자보호 체계</a></li>
+              <li><a href="#">소비자보호 유익정보</a></li>
+              <li><a href="#">소비자보호 우수사례</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ── SUB CONTENT ── -->
+<div class="sub-content" style="margin-top:60px;">
+  <img src="./svg/sub.svg" alt="치매담은간병플러스 상담" style="display:block;margin:0 auto;max-width:584px;width:100%;">
+</div>
+
+<script>
+// GNB 스크롤: sub를 스크롤 위치에 1:1 직접 연동
+const gnbSub  = document.querySelector('.gnb-sub');
+const gnbMain = document.querySelector('.gnb-main');
+let subH = gnbSub ? gnbSub.offsetHeight : 0;
+
+function updateGnbScroll() {
+  if (!gnbSub || !gnbMain) return;
+  if (!subH) subH = gnbSub.offsetHeight;
+  if (!subH) return;
+  const progress = Math.min(window.scrollY / subH, 1);
+  gnbSub.style.transform    = `translateY(-${progress * 100}%)`;
+  gnbSub.style.opacity      = String(1 - progress);
+  gnbSub.style.marginBottom = `-${progress * subH}px`;
+}
+
+window.addEventListener('load', () => {
+  if (gnbSub) subH = gnbSub.offsetHeight;
+  updateGnbScroll();
+});
+
+window.addEventListener('scroll', updateGnbScroll, { passive: true });
+
+/* ── GNB 롤링 배너 ── */
+function initGnbBanner(trackId, megaId) {
+  (function() {
+    const slides = document.querySelectorAll('#' + trackId + ' .gnb-banner-bg');
+    if (!slides.length) return;
+
+    let current = 0;
+    let timer = null;
+
+    function goTo(idx) {
+      slides[current].classList.remove('active');
+      current = (idx + slides.length) % slides.length;
+      slides[current].classList.add('active');
+    }
+
+    function next() { goTo(current + 1); }
+
+    function startTimer() { timer = setInterval(next, 3000); }
+    function resetTimer() { clearInterval(timer); startTimer(); }
+
+    const mega = document.getElementById(megaId);
+    if (mega) {
+      mega.addEventListener('mouseenter', () => clearInterval(timer));
+      mega.addEventListener('mouseleave', startTimer);
+    }
+
+    startTimer();
+  })();
+}
+initGnbBanner('gnbBannerTrack', 'gnbMega');
+
+/* ── Mega Menus ── */
+(function() {
+  const gnbMain    = document.querySelector('.gnb-main');
+  const dimOverlay = document.getElementById('gnbDimOverlay');
+  const configs    = [
+    { itemId: 'gnb-mycontract-item', megaId: 'gnbMegaMyContract' },
+    { itemId: 'gnb-product-item',    megaId: 'gnbMega' },
+    { itemId: 'gnb-finance-item',    megaId: 'gnbMegaFinance' },
+    { itemId: 'gnb-events-item',     megaId: 'gnbMegaEvents' },
+    { itemId: 'gnb-support-item',    megaId: 'gnbMegaSupport' },
+  ];
+  const allMegas = configs.map(c => document.getElementById(c.megaId)).filter(Boolean);
+
+  let hideTimer;
+
+  function updateTop(mega) {
+    const rect = gnbMain.getBoundingClientRect();
+    mega.style.top = rect.bottom + 'px';
+    if (dimOverlay) dimOverlay.style.top = rect.bottom + 'px';
+  }
+
+  function closeAll() {
+    allMegas.forEach(m => m.classList.remove('open'));
+    if (dimOverlay) dimOverlay.classList.remove('open');
+  }
+
+  function show(mega) {
+    clearTimeout(hideTimer);
+    closeAll();
+    updateTop(mega);
+    mega.classList.add('open');
+    if (dimOverlay) dimOverlay.classList.add('open');
+  }
+
+  function hide() {
+    hideTimer = setTimeout(closeAll, 120);
+  }
+
+  configs.forEach(({ itemId, megaId }) => {
+    const item = document.getElementById(itemId);
+    const mega = document.getElementById(megaId);
+    if (!item || !mega) return;
+    item.addEventListener('mouseenter', () => show(mega));
+    item.addEventListener('mouseleave', hide);
+    mega.addEventListener('mouseenter', () => { clearTimeout(hideTimer); });
+    mega.addEventListener('mouseleave', hide);
+  });
+
+  if (dimOverlay) dimOverlay.addEventListener('mouseenter', hide);
+
+  window.addEventListener('scroll', () => {
+    const anyOpen = allMegas.some(m => m.classList.contains('open'));
+    if (anyOpen) {
+      clearTimeout(hideTimer);
+      allMegas.forEach(m => {
+        m.style.transition = 'none';
+        m.classList.remove('open');
+      });
+      if (dimOverlay) {
+        dimOverlay.style.transition = 'none';
+        dimOverlay.classList.remove('open');
+      }
+      requestAnimationFrame(() => {
+        allMegas.forEach(m => { m.style.transition = ''; });
+        if (dimOverlay) dimOverlay.style.transition = '';
+      });
+    }
+  }, { passive: true });
+})();
+</script>
+
+</body>
+</html>

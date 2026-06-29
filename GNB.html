@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한화생명 GNB 프로토타입</title>
+<style>
+  @font-face{font-family:'HanwhaGothic';src:url('./font/04HanwhaGothicB_OTF.otf')format('opentype');font-weight:700}
+  @font-face{font-family:'HanwhaGothic';src:url('./font/05HanwhaGothicR_OTF.otf')format('opentype');font-weight:400}
+  @font-face{font-family:'HanwhaGothic';src:url('./font/06HanwhaGothicL_OTF.otf')format('opentype');font-weight:300}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#f7f6f5;min-height:300vh;font-family:'HanwhaGothic','Apple SD Gothic Neo','Malgun Gothic',sans-serif;}
+
+  /* ── Utility Bar (gnb_sub) ── */
+  .gnb-util{width:100%;background:#fff;border-bottom:1px solid #f0eeec;}
+  .gnb-util-inner{
+    max-width:1128px;margin:0 auto;height:60px;
+    display:flex;align-items:center;justify-content:flex-end;padding:0;
+    gap:28px;
+  }
+  .gnb-util-textlinks{display:flex;align-items:center;gap:28px;}
+  .gnb-util-textlinks a{
+    font-family:'HanwhaGothic','Apple SD Gothic Neo',sans-serif;
+    font-size:14px;font-weight:300;color:#272B2F;text-decoration:none;
+    display:inline-flex;align-items:center;gap:4px;white-space:nowrap;
+    transition:color 200ms ease;
+  }
+  .gnb-util-textlinks a:hover{color:#FA6600;}
+  .gnb-util-textlinks a svg{flex-shrink:0;color:inherit;}
+  .gnb-util-btns{display:flex;align-items:center;gap:8px;}
+  .gnb-util-btn{
+    font-family:'HanwhaGothic','Apple SD Gothic Neo',sans-serif;
+    font-size:14px;font-weight:300;color:#272B2F;
+    background:none;cursor:pointer;text-decoration:none;
+    padding:4px 12px;border-radius:4px;white-space:nowrap;
+    transition:color 200ms ease, border-color 200ms ease;
+    display:inline-flex;align-items:center;
+  }
+  .gnb-util-btn--outline{border:1px solid #403F3E;}
+  .gnb-util-btn--solid{border:1px solid #272B2F;}
+  .gnb-util-btn:hover{color:#FA6600;border-color:#FA6600;}
+
+  /* ── Dim Overlay ── */
+  .gnb-dim-overlay{
+    position:fixed;top:0;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,0.45);opacity:0;pointer-events:none;
+    transition:opacity 200ms ease;z-index:99;
+  }
+  .gnb-dim-overlay.open{opacity:1;pointer-events:auto;}
+
+  /* ── GNB Main ── */
+  .gnb-main{
+    width:100%;background:#fff;
+    position:sticky;top:0;z-index:100;
+    transition:box-shadow 200ms ease;
+    border-bottom:1px solid #f0f0f0;
+  }
+  .gnb-main.shadow{box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+  .gnb-main-wrap{position:relative;width:100%;}
+  .gnb-main-inner{
+    display:flex;align-items:center;
+    width:100%;max-width:1128px;height:68px;margin:0 auto;
+  }
+  .gnb-logo{flex-shrink:0;display:flex;align-items:center;text-decoration:none;margin-right:32px;}
+  .gnb-logo img{height:36px;width:auto;display:block;}
+
+  /* ── 1-depth Menu ── */
+  .gnb-menu{
+    display:flex;align-items:center;justify-content:center;
+    flex:1;gap:48px;list-style:none;margin:0;padding:0;
+  }
+  .gnb-menu-item{
+    position:relative;display:flex;align-items:center;height:68px;
+  }
+  .gnb-menu-item::after{
+    content:'';position:absolute;bottom:0;left:0;width:0;height:2px;
+    background:#FA6600;transition:width 220ms ease;
+  }
+  .gnb-menu-item:hover::after,.gnb-menu-item.active::after{width:100%;}
+  .gnb-menu-item>a{
+    font-family:'HanwhaGothic','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    font-size:20px;font-style:normal;font-weight:400;line-height:150%;
+    color:#272B2F;text-decoration:none;white-space:nowrap;
+    display:block;padding:0;
+    transition:color 200ms ease;
+  }
+  .gnb-menu-item:hover>a,.gnb-menu-item.active>a{color:#FA6600;}
+
+  /* ── GNB Actions ── */
+  .gnb-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:16px;}
+  .gnb-icon-btn{
+    background:none;border:none;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;padding:4px;
+    color:#272B2F;transition:color 200ms ease;
+  }
+  .gnb-icon-btn:hover{color:#FA6600;}
+  .gnb-login-btn{
+    background:#FA6600;border:none;cursor:pointer;
+    font-family:'HanwhaGothic','Apple SD Gothic Neo',sans-serif;
+    font-size:14px;font-weight:700;color:#fff;
+    padding:7px 18px;border-radius:1000px;white-space:nowrap;
+    transition:background 200ms ease;
+  }
+  .gnb-login-btn:hover{background:#e55a00;}
+
+  /* ── Mega Menu ── */
+  .gnb-mega{
+    position:fixed;left:0;width:100%;background:#fff;
+    pointer-events:none;
+    clip-path:inset(0 0 101% 0);
+    transition:clip-path 400ms cubic-bezier(0.16,1,0.3,1);
+    z-index:200;overflow:hidden;
+  }
+  .gnb-mega--auto{height:auto;max-height:calc(100vh - 80px);overflow-y:auto;padding-bottom:52px;}
+  .gnb-mega.open{pointer-events:auto;clip-path:inset(0 0 0% 0);}
+  .gnb-mega-inner{
+    display:flex;flex-direction:column;
+    width:100%;max-width:1128px;
+    margin:0 auto;padding:60px 0 100px;
+  }
+  .gnb-mega-cols{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    gap:0 24px;width:100%;align-items:start;
+  }
+  .gnb-mega-cols--3{grid-template-columns:repeat(3,1fr);}
+  .gnb-mega-cols--2{grid-template-columns:repeat(2,minmax(0,480px));}
+  .gnb-mega-row-divider{grid-column:1/-1;height:1px;background:#E5E5E5;margin:32px 0;}
+
+  /* 2-depth */
+  .gnb-l2-group{min-width:0;width:100%;}
+  .gnb-l2-cat{
+    font-family:'HanwhaGothic','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    font-size:18px;font-weight:700;line-height:150%;
+    color:#272B2F;margin:0 0 16px;display:block;
+  }
+  .gnb-l2-list + .gnb-l2-cat,
+  .gnb-l2-cat + .gnb-l2-cat{margin-top:24px;}
+  .gnb-l2-cat a{
+    display:inline-flex;align-items:center;gap:4px;
+    color:inherit;text-decoration:none;font:inherit;
+  }
+  .gnb-l2-cat a:hover{color:#FA6600;}
+
+  /* 3-depth flat links */
+  .gnb-l2-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;}
+  .gnb-l2-list li a{
+    font-family:'HanwhaGothic','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    font-size:16px;font-weight:300;line-height:150%;
+    color:#5E5C5A;text-decoration:none;word-break:keep-all;
+    display:inline-flex;align-items:flex-start;gap:6px;
+  }
+  .gnb-l2-list li a:hover{color:#FA6600;}
+
+  /* 3-depth sub-header group — accordion */
+  .gnb-l3-group{margin-top:12px;}
+  .gnb-l3-group:first-of-type{margin-top:0;}
+  .gnb-l2-list + .gnb-l3-group{margin-top:12px;}
+  .gnb-l3-group + .gnb-l2-list{margin-top:12px;}
+  .gnb-l3-cat{
+    font-family:'HanwhaGothic','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    font-size:16px;font-weight:300;color:#5E5C5A;line-height:150%;
+    margin:0;display:flex;align-items:center;justify-content:space-between;
+    cursor:pointer;user-select:none;padding:0;gap:6px;
+    transition:color 180ms ease;word-break:keep-all;
+  }
+  .gnb-l3-cat .l3-chev{
+    flex-shrink:0;width:16px;height:16px;color:#8C8A88;
+    transition:transform 220ms ease, color 180ms ease;
+  }
+  .gnb-l3-group.open .gnb-l3-cat{color:#FA6600;}
+  .gnb-l3-group.open .l3-chev{transform:rotate(180deg);color:#FA6600;}
+  /* 4-depth — hidden by default, flat list when open */
+  .gnb-l4-list{
+    list-style:none;margin:8px 0 0;padding:0;
+    display:none;flex-direction:column;gap:12px;
+    background:none;
+  }
+  .gnb-l3-group.open .gnb-l4-list{display:flex;}
+  .gnb-l4-list li a{
+    font-family:'HanwhaGothic','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    font-size:16px;font-weight:300;line-height:150%;
+    color:#5E5C5A;text-decoration:none;word-break:keep-all;
+  }
+  .gnb-l4-list li a:hover{color:#FA6600;}
+  /* 전체상품 보기 버튼 */
+  .gnb-allproducts-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    font-family:'HanwhaGothic','Apple SD Gothic Neo',sans-serif;
+    font-size:14px;font-weight:700;color:#272B2F;
+    text-decoration:none;padding:8px 14px;
+    background:#F5F4F2;border-radius:8px;margin-bottom:12px;
+    transition:background 180ms ease, color 180ms ease;
+  }
+  .gnb-allproducts-btn:hover{background:#FEE9D9;color:#FA6600;}
+
+  /* Finder bar (보험상품/금융상품 하단) */
+  .gnb-mega-finder{
+    margin-top:32px;padding-top:28px;border-top:1px solid #E5E5E5;
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+  }
+  .gnb-product-text-btns{display:flex;align-items:flex-start;gap:56px;}
+  .gnb-text-btn-group{display:flex;flex-direction:column;gap:8px;}
+  .gnb-finder-link{
+    display:inline-flex;align-items:center;gap:4px;
+    font-family:'HanwhaGothic','Apple SD Gothic Neo',sans-serif;
+    font-size:18px;font-weight:700;line-height:1.5;
+    color:#272B2F;text-decoration:none;
+  }
+  .gnb-finder-link:hover{color:#FA6600;}
+  .gnb-text-btn-group p{
+    font-family:'HanwhaGothic','Apple SD Gothic Neo',sans-serif;
+    font-size:13px;font-weight:300;line-height:1.4;color:#7E7C7A;margin:0;
+  }
+  .gnb-banner-wrap{flex-shrink:0;}
+  .gnb-banner-track{
+    position:relative;width:320px;height:100px;border-radius:12px;overflow:hidden;
+  }
+  .gnb-banner-bg{position:absolute;inset:0;opacity:0;transition:opacity 400ms ease;}
+  .gnb-banner-bg.active{opacity:1;}
+  .gnb-banner-svg{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;z-index:1;pointer-events:none;
+  }
+
+  /* Demo body */
+  .demo-content{max-width:1128px;margin:60px auto;padding:0;}
+  .demo-content h1{
+    font-family:'HanwhaGothic',sans-serif;font-size:28px;font-weight:700;
+    color:#272B2F;margin-bottom:12px;
+  }
+  .demo-content p{
+    font-family:'HanwhaGothic',sans-serif;font-size:15px;font-weight:300;
+    color:#7E7C7A;line-height:1.8;margin-bottom:40px;
+  }
+  .demo-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+  }
+  .demo-card{
+    background:#fff;border-radius:16px;padding:32px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);height:160px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Utility Bar (gnb_sub) -->
+<div class="gnb-util">
+  <div class="gnb-util-inner">
+    <nav class="gnb-util-textlinks">
+      <a href="#">공시실
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M2.5 2.5H6.5V3.5H3.5V10.5H10.5V7.5H11.5V11.5H2.5V2.5Z" fill="currentColor"/>
+          <path d="M8 2.5H11.5V6H10.5V4.207L6.354 8.354L5.646 7.646L9.793 3.5H8V2.5Z" fill="currentColor"/>
+        </svg>
+      </a>
+      <a href="#">법인회원
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M2.5 2.5H6.5V3.5H3.5V10.5H10.5V7.5H11.5V11.5H2.5V2.5Z" fill="currentColor"/>
+          <path d="M8 2.5H11.5V6H10.5V4.207L6.354 8.354L5.646 7.646L9.793 3.5H8V2.5Z" fill="currentColor"/>
+        </svg>
+      </a>
+      <a href="#">회사소개
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M2.5 2.5H6.5V3.5H3.5V10.5H10.5V7.5H11.5V11.5H2.5V2.5Z" fill="currentColor"/>
+          <path d="M8 2.5H11.5V6H10.5V4.207L6.354 8.354L5.646 7.646L9.793 3.5H8V2.5Z" fill="currentColor"/>
+        </svg>
+      </a>
+    </nav>
+    <div class="gnb-util-btns">
+      <a href="#" class="gnb-util-btn gnb-util-btn--outline">내정보</a>
+      <a href="#" class="gnb-util-btn gnb-util-btn--solid">로그아웃</a>
+    </div>
+  </div>
+</div>
+
+<div class="gnb-dim-overlay" id="gnbDimOverlay"></div>
+
+<div class="gnb-main" id="gnbMain">
+  <div class="gnb-main-wrap">
+    <nav class="gnb-main-inner">
+      <a class="gnb-logo" href="#">
+        <img src="./svg/CI.svg" alt="한화생명">
+      </a>
+      <ul class="gnb-menu">
+        <li class="gnb-menu-item" id="gnb-mycontract-item"><a href="#">나의계약</a></li>
+        <li class="gnb-menu-item" id="gnb-product-item"><a href="#">보험상품</a></li>
+        <li class="gnb-menu-item" id="gnb-finance-item"><a href="#">금융상품</a></li>
+        <li class="gnb-menu-item" id="gnb-benefits-item"><a href="#">혜택·정보</a></li>
+        <li class="gnb-menu-item" id="gnb-consumer-item"><a href="#">소비자포털</a></li>
+      </ul>
+      <div class="gnb-actions">
+        <button class="gnb-icon-btn" aria-label="검색">
+          <img src="./svg/28/search.svg" width="28" height="28" alt="검색">
+        </button>
+        <button class="gnb-icon-btn" id="gnb-login-btn" aria-label="도움말">
+          <img src="./svg/28/help.svg" width="28" height="28" alt="도움말">
+        </button>
+        <button class="gnb-icon-btn" aria-label="전체메뉴">
+          <img src="./svg/28/menu-line.svg" width="28" height="28" alt="전체메뉴">
+        </button>
+      </div>
+    </nav>
+
+    <!-- ══════════════════════════════════════════
+         MEGA: 나의 계약
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega gnb-mega--auto" id="gnbMegaMyContract">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+
+          <!-- 보험관리 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">보험관리</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">보험계약 정보</a></li>
+              <li><a href="#">보험금 신청</a></li>
+              <li><a href="#">일반보험금 신청</a></li>
+              <li><a href="#">자동화 등록</a></li>
+              <li><a href="#">보험료 납입</a></li>
+              <li><a href="#">계좌 신청/변경</a></li>
+              <li><a href="#">보험청약 관리</a></li>
+              <li><a href="#">보험계약 변경</a></li>
+              <li><a href="#">해지(해약) 신청</a></li>
+              <li><a href="#">중도인출 신청/내역</a></li>
+              <li><a href="#">펀드수익률 변동 알림서비스</a></li>
+              <li><a href="#">타사연금계좌 이체 신청/조회</a></li>
+            </ul>
+          </div>
+
+          <!-- 대출 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">대출</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">대출사항 조회</a></li>
+              <li><a href="#">원리금납부계좌 변경</a></li>
+              <li><a href="#">원리금 즉시상환 신청</a></li>
+              <li><a href="#">대출 연기신청</a></li>
+              <li><a href="#">대출계약 철회</a></li>
+              <li><a href="#">금리인하 신청 및 내역</a></li>
+              <li><a href="#">신용평가결과 대응권 신청</a></li>
+              <li><a href="#">대출채권 소멸시효 완성조회</a></li>
+              <li><a href="#">기한이익상실 예정 통지</a></li>
+              <li><a href="#">주택 경매 예정 통지</a></li>
+              <li><a href="#">채권양도 예정 통지</a></li>
+            </ul>
+          </div>
+
+          <!-- 퇴직연금 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">퇴직연금</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">계약정보</a></li>
+              <li><a href="#">개인부담금 납입(즉시이체)</a></li>
+              <li><a href="#">적립금운용</a></li>
+              <li><a href="#">자동이체 등록/변경</a></li>
+              <li><a href="#">상품라인업</a></li>
+              <li><a href="#">운용지시</a></li>
+              <li><a href="#">개인형 IRP 가입</a></li>
+              <li><a href="#">증명서발급</a></li>
+              <li><a href="#">개인형 IRP 지급청구</a></li>
+            </ul>
+          </div>
+
+          <!-- 펀드 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">펀드</h3>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">펀드보유내역</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">보유펀드계좌조회</a></li>
+                <li><a href="#">펀드계좌상세조회</a></li>
+                <li><a href="#">인출가능금액조회</a></li>
+                <li><a href="#">실질수익률보고서</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">펀드매매처리</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">신규매수</a></li>
+                <li><a href="#">추가매수</a></li>
+                <li><a href="#">환매</a></li>
+                <li><a href="#">신청내역조회 및 취소</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">자동이체/은행/증명서</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">은행이체</a></li>
+                <li><a href="#">은행이체처리내역조회</a></li>
+                <li><a href="#">CMS출금이체 신청/해지/변경</a></li>
+                <li><a href="#">약정계좌 신청/해지</a></li>
+                <li><a href="#">소득공제납입증명서</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">고객정보/펀드계좌관리</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">고객정보정정</a></li>
+                <li><a href="#">통장/인감분실신고</a></li>
+                <li><a href="#">펀드계좌해지</a></li>
+                <li><a href="#">펀드계약변경</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="gnb-mega-row-divider"></div>
+
+          <!-- 신탁 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">신탁</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">신탁재산운용내역</a></li>
+            </ul>
+          </div>
+
+          <!-- 내 정보 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">내 정보</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">개인정보 변경</a></li>
+              <li><a href="#">개인신용정보 이용·제공 현황조회</a></li>
+              <li><a href="#">개인정보 유출 신고</a></li>
+              <li><a href="#">보험계약 대출이자 납입계좌</a></li>
+              <li><a href="#">나의 관심상품</a></li>
+              <li><a href="#">온라인 안내장</a></li>
+              <li><a href="#">금융거래내역</a></li>
+              <li><a href="#">전자서명조회</a></li>
+              <li><a href="#">증명서발급</a></li>
+              <li><a href="#">마케팅정보 수신동의</a></li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MEGA: 보험상품
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega" id="gnbMegaProduct">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">암·건강보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">e건강보험(암보험)</a></li>
+              <li><a href="#">e암보험(비갱신형)</a></li>
+              <li><a href="#">e건강보험(암뇌심)</a></li>
+              <li><a href="#">e건강보험(뇌심)</a></li>
+              <li><a href="#">걸음e건강보험</a></li>
+              <li><a href="#">시그니처H암보험</a></li>
+              <li><a href="#">H건강플러스보험</a></li>
+              <li><a href="#">Need AI 암보험</a></li>
+              <li><a href="#">치매담은간병플러스보험</a></li>
+              <li><a href="#">e종신보험</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">종신·정기보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">e정기보험</a></li>
+              <li><a href="#">제로백H종신보험</a></li>
+              <li><a href="#">하나로H종신보험</a></li>
+              <li><a href="#">상속H종신보험</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">연금·저축보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">e디딤돌저축보험</a></li>
+              <li><a href="#">e재테크 저축보험</a></li>
+              <li><a href="#">e연금저축보험</a></li>
+              <li><a href="#">e연금보험</a></li>
+              <li><a href="#">연금·저축보험 상담</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">간편심사보험</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">포켓레저보험</a></li>
+              <li><a href="#">간편포켓레저보험</a></li>
+              <li><a href="#">포켓골절보험</a></li>
+              <li><a href="#">간편포켓골절보험</a></li>
+            </ul>
+            <h3 class="gnb-l2-cat"><a href="#">내 보험 분석</a></h3>
+            <h3 class="gnb-l2-cat">보험가이드</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">보험용어사전</a></li>
+            </ul>
+          </div>
+
+        </div>
+        <div class="gnb-mega-finder">
+          <div class="gnb-product-text-btns">
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-finder-link">
+                전체상품 보기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+              <p>보험상품 한눈에 찾아보기</p>
+            </div>
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-finder-link">
+                보험 상담하기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+              <p>전문가에게 보험 상담받기</p>
+            </div>
+          </div>
+          <div class="gnb-banner-wrap">
+            <div class="gnb-banner-track" id="gnbBannerTrack">
+              <div class="gnb-banner-bg active" style="background:#F5F4F2;"></div>
+              <div class="gnb-banner-bg" style="background:#5D39EA;"></div>
+              <div class="gnb-banner-bg" style="background:#FA6600;"></div>
+              <img src="./svg/gnb_banner.svg" class="gnb-banner-svg" alt="배너">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MEGA: 금융상품
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega" id="gnbMegaFinance">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+
+          <!-- 대출 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">대출</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">보험계약대출(약관대출)</a></li>
+              <li><a href="#">우수고객 신용대출</a></li>
+              <li><a href="#">한화생명 신용대출</a></li>
+              <li><a href="#">홈드림 모기지론</a></li>
+              <li><a href="#">한화멤버스톤</a></li>
+            </ul>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">대출가이드</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">대출이란</a></li>
+                <li><a href="#">신용정보 관련 안내</a></li>
+                <li><a href="#">무방문 원리금납부 안내</a></li>
+                <li><a href="#">대출창구 안내</a></li>
+                <li><a href="#">아파트 시세정보</a></li>
+                <li><a href="#">협약부동산 안내</a></li>
+                <li><a href="#">대출약관</a></li>
+                <li><a href="#">금리인하요구권</a></li>
+                <li><a href="#">대출계약 철회권</a></li>
+                <li><a href="#">대출용어사전</a></li>
+                <li><a href="#">대출모집인 수수료율</a></li>
+                <li><a href="#">대출채권 소멸시효</a></li>
+                <li><a href="#">채무조정제도 안내</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 펀드 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">펀드</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">전체 펀드 상품 보기</a></li>
+            </ul>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">펀드가이드</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">펀드란?</a></li>
+                <li><a href="#">펀드투자 동영상</a></li>
+                <li><a href="#">펀드가입 프로세스</a></li>
+                <li><a href="#">펀드약관</a></li>
+                <li><a href="#">펀드공시실</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 신탁 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">신탁</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">전체 신탁 상품 보기</a></li>
+            </ul>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">신탁가이드</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">신탁이란?</a></li>
+                <li><a href="#">신탁의 유형</a></li>
+                <li><a href="#">신탁가입 프로세스</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 퇴직연금 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">퇴직연금</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">전체 퇴직연금 상품 보기</a></li>
+            </ul>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">퇴직연금가이드</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">퇴직연금제도란?</a></li>
+                <li><a href="#">퇴직연금제도 종류</a></li>
+                <li><a href="#">도입 및 기대효과</a></li>
+                <li><a href="#">퇴직연금 과세제도</a></li>
+                <li><a href="#">Why 한화생명</a></li>
+                <li><a href="#">투자가이드</a></li>
+                <li><a href="#">컨설팅 서비스</a></li>
+                <li><a href="#">K-IFRS 계리평가서비스</a></li>
+                <li><a href="#">교육안내 / 가입자교육</a></li>
+                <li><a href="#">자료실</a></li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+        <div class="gnb-mega-finder">
+          <div class="gnb-product-text-btns">
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-finder-link">
+                전체상품 보기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+              <p>금융상품 한눈에 찾아보기</p>
+            </div>
+            <div class="gnb-text-btn-group">
+              <a href="#" class="gnb-finder-link">
+                자산관리 상담하기
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 5L13 10L8 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+              <p>전문가와 함께하는 맞춤 자산관리</p>
+            </div>
+          </div>
+          <div class="gnb-banner-wrap">
+            <div class="gnb-banner-track">
+              <div class="gnb-banner-bg active" style="background:#F5F4F2;"></div>
+              <div class="gnb-banner-bg" style="background:#5D39EA;"></div>
+              <div class="gnb-banner-bg" style="background:#FA6600;"></div>
+              <img src="./svg/gnb_banner.svg" class="gnb-banner-svg" alt="배너">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MEGA: 혜택·정보
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega gnb-mega--auto" id="gnbMegaBenefits">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat"><a href="#">이벤트</a></h3>
+            <h3 class="gnb-l2-cat"><a href="#">라이프팁</a></h3>
+            <h3 class="gnb-l2-cat"><a href="#">헬스케어서비스</a></h3>
+            <h3 class="gnb-l2-cat"><a href="#">건강증진형보험료 할인 서비스</a></h3>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">제휴 서비스</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">상조서비스</a></li>
+              <li><a href="#">Need 암 보호시스템</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat"><a href="#">우행터 PLUS 서비스</a></h3>
+          </div>
+
+          <!-- 이용안내 (4열) -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">이용안내</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">주요업무</a></li>
+            </ul>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">한화생명종합서비스</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">보험가입</a></li>
+                <li><a href="#">보험유지</a></li>
+                <li><a href="#">보험정보</a></li>
+                <li><a href="#">(다이렉트) 보험가입</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">금융서비스 안내</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">이용방법</a></li>
+                <li><a href="#">보험</a></li>
+                <li><a href="#">대출</a></li>
+                <li><a href="#">펀드</a></li>
+                <li><a href="#">기타</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">공동인증센터</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">공동인증서 등록/변경/삭제</a></li>
+                <li><a href="#">스마트폰 인증서 복사</a></li>
+              </ul>
+            </div>
+            <ul class="gnb-l2-list">
+              <li><a href="#">로그인 안내</a></li>
+              <li><a href="#">개인회원가입 안내</a></li>
+              <li><a href="#">기업회원가입 안내</a></li>
+              <li><a href="#">디지털안내장</a></li>
+              <li><a href="#">한화생명 앱 이용안내</a></li>
+              <li><a href="#">장애인 홈페이지 이용</a></li>
+              <li><a href="#">모바일 화상상담 이용</a></li>
+              <li><a href="#">이용약관</a></li>
+              <li><a href="#">고객권리 안내</a></li>
+              <li><a href="#">개인정보처리방침</a></li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MEGA: 소비자포털
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega" id="gnbMegaConsumer">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols">
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">고객의소리</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">칭찬·불만·신고</a></li>
+              <li><a href="#">전자민원접수</a></li>
+              <li><a href="#">나의 민원</a></li>
+            </ul>
+            <h3 class="gnb-l2-cat">고객지원</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">자주묻는 질문</a></li>
+              <li><a href="#">전화상담 ARS 안내</a></li>
+              <li><a href="#">지점찾기</a></li>
+              <li><a href="#">구비서류 안내</a></li>
+              <li><a href="#">개인신용정보 이용제공 현황조회</a></li>
+              <li><a href="#">단체-개인실손 연계제도 안내</a></li>
+              <li><a href="#">두낫콜 등록/철회</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">금융소비자보호체계</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">금융소비자보호헌장</a></li>
+              <li><a href="#">금융소비자보호법</a></li>
+              <li><a href="#">금융소비자권리</a></li>
+              <li><a href="#">소비자보호조직</a></li>
+              <li><a href="#">민원처리프로세스</a></li>
+              <li><a href="#">상품개발프로세스</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">금융소비자유익정보</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">금융소비자의 소리</a></li>
+              <li><a href="#">금융소비자 유익 사이트</a></li>
+              <li><a href="#">금융소비자교육</a></li>
+              <li><a href="#">분쟁조정사례 및 판례</a></li>
+              <li><a href="#">금융감독원 소비자경보</a></li>
+              <li><a href="#">금융사고 대응안내</a></li>
+            </ul>
+          </div>
+
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">금융소비자보호 공시</h3>
+            <ul class="gnb-l2-list">
+              <li><a href="#">금융소비자보호 내부통제기준</a></li>
+              <li><a href="#">금융소비자보호실태평가(현재)</a></li>
+              <li><a href="#">금융소비자보호실태평가(과거)</a></li>
+              <li><a href="#">민원건수공시 (현재)</a></li>
+              <li><a href="#">민원건수공시 (과거)</a></li>
+            </ul>
+            <h3 class="gnb-l2-cat"><a href="#">방문/전화권유판매원 조회</a></h3>
+            <h3 class="gnb-l2-cat"><a href="#">소비자보호 우수사례</a></h3>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════
+         MEGA: 로그인 (action btn)
+    ══════════════════════════════════════════ -->
+    <div class="gnb-mega" id="gnbMegaLogin">
+      <div class="gnb-mega-inner">
+        <div class="gnb-mega-cols gnb-mega-cols--2">
+
+          <!-- 개인회원 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">개인회원</h3>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">로그인</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">아이디 로그인(대표홈)</a></li>
+                <li><a href="#">본인인증 로그인</a></li>
+                <li><a href="#">공동인증서 로그인</a></li>
+                <li><a href="#">앱 인증 로그인</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">회원가입</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">대표홈 회원가입</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat"><a href="#">아이디/패스워드 찾기</a></p>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">보안서비스</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">보안프로그램 안내</a></li>
+                <li><a href="#">보안프로그램 설치안내</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">증명서발급</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">소득 및 세액공제납입증명서</a></li>
+                <li><a href="#">보험료납입확인서</a></li>
+                <li><a href="#">보험증권 재발행</a></li>
+                <li><a href="#">신용/부동산대출증명서</a></li>
+                <li><a href="#">계약내용확인서</a></li>
+                <li><a href="#">원천징수영수증</a></li>
+                <li><a href="#">보험계약대출잔액증명서</a></li>
+                <li><a href="#">보험계약대출약정서</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 기업회원 -->
+          <div class="gnb-l2-group">
+            <h3 class="gnb-l2-cat">기업회원</h3>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat"><a href="#">로그인</a></p>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat">퇴직연금창구</p>
+              <ul class="gnb-l4-list">
+                <li><a href="#">담당자등록</a></li>
+              </ul>
+            </div>
+            <div class="gnb-l3-group">
+              <p class="gnb-l3-cat"><a href="#">퇴직연금관리자</a></p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Demo page content -->
+<div class="demo-content">
+  <h1>GNB 프로토타입 — IA 구조 확인용</h1>
+  <p>각 메뉴 항목에 마우스를 올리면 메가메뉴가 열립니다.<br>
+  우측 상단 로그인 버튼을 hover하면 로그인 메가메뉴가 열립니다.<br>
+  스크롤 시 GNB가 상단에 고정됩니다.</p>
+  <div class="demo-grid">
+    <div class="demo-card"></div><div class="demo-card"></div><div class="demo-card"></div>
+    <div class="demo-card"></div><div class="demo-card"></div><div class="demo-card"></div>
+    <div class="demo-card"></div><div class="demo-card"></div><div class="demo-card"></div>
+  </div>
+</div>
+
+<script>
+/* ── Mega Menu ── */
+(function() {
+  const gnbMain    = document.getElementById('gnbMain');
+  const dimOverlay = document.getElementById('gnbDimOverlay');
+
+  const menuConfigs = [
+    { itemId: 'gnb-mycontract-item', megaId: 'gnbMegaMyContract' },
+    { itemId: 'gnb-product-item',    megaId: 'gnbMegaProduct'     },
+    { itemId: 'gnb-finance-item',    megaId: 'gnbMegaFinance'     },
+    { itemId: 'gnb-benefits-item',   megaId: 'gnbMegaBenefits'    },
+    { itemId: 'gnb-consumer-item',   megaId: 'gnbMegaConsumer'    },
+    { itemId: 'gnb-login-btn',       megaId: 'gnbMegaLogin'       },
+  ];
+
+  const allMegas = menuConfigs.map(c => document.getElementById(c.megaId)).filter(Boolean);
+  let hideTimer;
+
+  function updateTop(mega) {
+    const rect = gnbMain.getBoundingClientRect();
+    mega.style.top = rect.bottom + 'px';
+    if (dimOverlay) dimOverlay.style.top = rect.bottom + 'px';
+  }
+
+  function closeAll() {
+    allMegas.forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.gnb-menu-item').forEach(i => i.classList.remove('active'));
+    if (dimOverlay) dimOverlay.classList.remove('open');
+  }
+
+  function show(mega, itemEl) {
+    clearTimeout(hideTimer);
+    closeAll();
+    updateTop(mega);
+    mega.classList.add('open');
+    if (itemEl) itemEl.classList.add('active');
+    if (dimOverlay) dimOverlay.classList.add('open');
+  }
+
+  function hide() { hideTimer = setTimeout(closeAll, 120); }
+
+  menuConfigs.forEach(({ itemId, megaId }) => {
+    const item = document.getElementById(itemId);
+    const mega = document.getElementById(megaId);
+    if (!item || !mega) return;
+    item.addEventListener('mouseenter', () => show(mega, item.closest?.('.gnb-menu-item')));
+    item.addEventListener('mouseleave', hide);
+    mega.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+    mega.addEventListener('mouseleave', hide);
+  });
+
+  if (dimOverlay) dimOverlay.addEventListener('mouseenter', hide);
+
+  window.addEventListener('scroll', () => {
+    const anyOpen = allMegas.some(m => m.classList.contains('open'));
+    if (anyOpen) {
+      clearTimeout(hideTimer);
+      allMegas.forEach(m => { m.style.transition = 'none'; m.classList.remove('open'); });
+      if (dimOverlay) { dimOverlay.style.transition = 'none'; dimOverlay.classList.remove('open'); }
+      requestAnimationFrame(() => {
+        allMegas.forEach(m => { m.style.transition = ''; });
+        if (dimOverlay) dimOverlay.style.transition = '';
+      });
+    }
+    gnbMain.classList.toggle('shadow', window.scrollY > 10);
+  }, { passive: true });
+})();
+
+/* ── Banner ── */
+(function() {
+  const track = document.getElementById('gnbBannerTrack');
+  if (!track) return;
+  const slides = track.querySelectorAll('.gnb-banner-bg');
+  if (!slides.length) return;
+  let cur = 0;
+  const next = () => {
+    slides[cur].classList.remove('active');
+    cur = (cur + 1) % slides.length;
+    slides[cur].classList.add('active');
+  };
+  let timer = setInterval(next, 3000);
+  const mega = document.getElementById('gnbMegaProduct');
+  if (mega) {
+    mega.addEventListener('mouseenter', () => clearInterval(timer));
+    mega.addEventListener('mouseleave', () => { timer = setInterval(next, 3000); });
+  }
+})();
+
+/* ---------- GNB L3 accordion ---------- */
+(function() {
+  const CHEV_SVG = `<svg class="l3-chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  document.querySelectorAll('.gnb-l3-group').forEach(group => {
+    const l4 = group.querySelector('.gnb-l4-list');
+    if (!l4) return;                          /* no collapsible content → skip */
+    const cat = group.querySelector('.gnb-l3-cat');
+    if (!cat) return;
+    /* inject chevron icon */
+    cat.insertAdjacentHTML('beforeend', CHEV_SVG);
+    cat.style.cursor = 'pointer';
+    cat.addEventListener('click', () => {
+      group.classList.toggle('open');
+    });
+  });
+})();
+</script>
+</body>
+</html>
