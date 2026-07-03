@@ -611,15 +611,63 @@
 .mobile-header { display: none; }
 
 /* ── Utility Bar (gnb_sub) ── */
-.gnb-sub{width:100%;background:#fff;border-bottom:1px solid #f0eeec;}
-.gnb-sub img{display:block;width:1128px;max-width:100%;height:auto;margin:0 auto;}
-.gnb-main {
+.gnb-sub {
   width: 100%;
   background: #fff;
+  border-bottom: 1px solid #F0EEEC;
+}
+.gnb-sub-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 1128px;
+  height: 44px;
+  margin: 0 auto;
+  padding: 0;
+}
+.gnb-util-nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.gnb-util-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: #272B2F;
+  text-decoration: none;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: color 180ms ease;
+}
+.gnb-util-link:hover { color: #F37321; }
+.gnb-util-ext {
+  display: inline-block;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 180ms ease;
+}
+.gnb-util-link:hover .gnb-util-ext { opacity: 1; }
+.gnb-util-sep {
+  width: 1px;
+  height: 12px;
+  background: #E5E4E3;
+  flex-shrink: 0;
+}
+
+/* ── Main GNB ── */
+.gnb-main {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   position: sticky;
   top: 0;
   z-index: 100;
-  transition: box-shadow 200ms ease;
 }
 .gnb-main-inner {
   display: flex;
@@ -666,14 +714,15 @@
   background: #F37321;
   transition: width 220ms ease;
 }
-.gnb-menu-item:hover::after {
+.gnb-menu-item:hover::after,
+.gnb-menu-item.is-open::after {
   width: 100%;
 }
 .gnb-menu-item > a {
   font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 700;
   line-height: 150%;
   color: #272B2F;
   text-decoration: none;
@@ -681,10 +730,14 @@
   display: block;
   transition: color 200ms ease;
 }
+.gnb-menu-item:hover > a,
+.gnb-menu-item.is-open > a {
+  color: #F37321;
+}
 .gnb-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 24px;
   flex-shrink: 0;
 }
 .gnb-icon-btn {
@@ -694,12 +747,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 0;
   color: #272B2F;
-  transition: color 200ms ease;
+  transition: opacity 200ms ease;
 }
 .gnb-icon-btn:hover {
-  color: #F37321;
+  opacity: 0.6;
 }
 
 /* ── Mega Menu ── */
@@ -2258,10 +2311,23 @@ html.in-iframe body { overflow-x: hidden; width: 100%; }
   <img src="./svg/header/default.svg" alt="한화생명">
 </div>
 <div class="gnb-dim-overlay" id="gnbDimOverlay"></div>
-<!-- Utility Bar (gnb_sub) -->
+
+<!-- ── Utility Bar ── -->
 <div class="gnb-sub">
-  <img src="./svg/gnb_sub.svg" alt="">
+  <div class="gnb-sub-inner">
+    <nav class="gnb-util-nav">
+      <a href="#" class="gnb-util-link">공시실</a>
+      <div class="gnb-util-sep"></div>
+      <a href="#" class="gnb-util-link">법인회원</a>
+      <div class="gnb-util-sep"></div>
+      <a href="#" class="gnb-util-link">회사소개</a>
+      <div class="gnb-util-sep"></div>
+      <a href="#" class="gnb-util-link">로그아웃</a>
+    </nav>
+  </div>
 </div>
+
+<!-- ── Main GNB ── -->
 <div class="gnb-main">
   <div class="gnb-main-wrap">
     <nav class="gnb-main-inner">
@@ -2272,7 +2338,7 @@ html.in-iframe body { overflow-x: hidden; width: 100%; }
         <li class="gnb-menu-item" id="gnb-mycontract-item"><a href="#">나의계약</a></li>
         <li class="gnb-menu-item" id="gnb-product-item"><a href="#">보험상품</a></li>
         <li class="gnb-menu-item" id="gnb-finance-item"><a href="#">금융상품</a></li>
-        <li class="gnb-menu-item" id="gnb-benefits-item"><a href="#">혜택·정보</a></li>
+        <li class="gnb-menu-item" id="gnb-benefits-item"><a href="#">혜택 ∙ 정보</a></li>
         <li class="gnb-menu-item" id="gnb-consumer-item"><a href="#">소비자포털</a></li>
       </ul>
       <div class="gnb-actions">
@@ -3627,6 +3693,10 @@ if (ltTrack) {
   function closeAll() {
     allMegas.forEach(m => m.classList.remove('open'));
     if (dimOverlay) dimOverlay.classList.remove('open');
+    configs.forEach(({ itemId }) => {
+      const el = document.getElementById(itemId);
+      if (el) el.classList.remove('is-open');
+    });
   }
 
   function show(mega) {
@@ -3635,6 +3705,11 @@ if (ltTrack) {
     updateTop(mega);
     mega.classList.add('open');
     if (dimOverlay) dimOverlay.classList.add('open');
+    const match = configs.find(c => c.megaId === mega.id);
+    if (match) {
+      const item = document.getElementById(match.itemId);
+      if (item) item.classList.add('is-open');
+    }
   }
 
   function hide() {
