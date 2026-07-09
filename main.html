@@ -2101,7 +2101,11 @@ html.in-iframe body { overflow-x: hidden; width: 100%; }
 .fn-card-cta-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  cursor: pointer;
+}
+.fn-card-cta-item:hover .fn-card-cta-text {
+  color: #FA6600;
 }
 .fn-card-cta-text {
   font-family: 'HanwhaGothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
@@ -2109,6 +2113,7 @@ html.in-iframe body { overflow-x: hidden; width: 100%; }
   font-weight: 300;
   color: #403f3e;
   line-height: 1.5;
+  transition: color 200ms ease;
 }
 /* 수익률 표시 (펀드 카드) */
 .fn-card-return {
@@ -4283,6 +4288,33 @@ function closeDeviceDemo() {
   document.getElementById('deviceDemoOverlay').classList.remove('active');
   document.body.style.overflow = '';
 }
+
+/* ── 상품 카드 / CTA 버튼 네비게이션 ──
+   - 카드 본문 클릭 → 상품상세(sub.html)
+   - CTA 버튼(상담하기 / 대출한도 확인하기 / 보험료 계산하기) 클릭 → 기능 랜딩(consult.html)
+     stopPropagation 으로 카드 상세 이동을 막고 각자의 화면으로 이동 */
+(function () {
+  // CTA 버튼별 이동 화면 매핑 (필요 시 각 항목의 목적지를 개별 지정)
+  const CTA_TARGET = {
+    '상담하기': 'consult.html',
+    '대출한도 확인하기': 'consult.html',
+    '보험료 계산하기': 'consult.html',
+  };
+
+  document.querySelectorAll('.fn-card').forEach(card => {
+    card.addEventListener('click', () => {
+      window.location.href = 'sub.html';
+    });
+  });
+
+  document.querySelectorAll('.fn-card-cta-item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.stopPropagation();
+      const label = item.querySelector('.fn-card-cta-text')?.textContent.trim();
+      window.location.href = CTA_TARGET[label] || 'consult.html';
+    });
+  });
+})();
 
 </script>
 
