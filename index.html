@@ -2,32 +2,127 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>NAVER</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한화생명 MSP 프로토타입</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body {
-  width: 100%; height: 100%;
-  background: #fff;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  overflow: hidden;
-}
-a {
-  display: block;
-  cursor: pointer;
-  line-height: 0;
-}
-img {
-  width: 800px;
-  height: auto;
-  display: block;
-}
+  :root {
+    --text-body: #272b2f;
+    --text-neutral-1: #908f8e;
+    --surface-neutral: #ffffff;
+    --surface-bg: #f5f5f5;
+    --accent: #FA6600;
+    --shadow-large: 0px 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--surface-bg);
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-body);
+    padding: 48px 24px;
+  }
+
+  .brand {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-neutral-1);
+    margin: 0 0 8px;
+  }
+
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 40px;
+    text-align: center;
+  }
+
+  .entry-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .entry-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface-neutral);
+    border-radius: 16px;
+    box-shadow: var(--shadow-large);
+    padding: 20px 22px;
+    text-decoration: none;
+    color: var(--text-body);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .entry-card:active { transform: scale(0.98); }
+
+  .entry-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--surface-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+  .entry-icon svg { width: 22px; height: 22px; }
+
+  .entry-text { flex: 1; }
+  .entry-name { font-size: 16px; font-weight: 700; margin: 0 0 2px; }
+  .entry-desc { font-size: 12px; color: var(--text-neutral-1); margin: 0; }
+
+  .entry-arrow { color: var(--text-neutral-1); flex-shrink: 0; }
+  .entry-arrow svg { width: 16px; height: 16px; display: block; }
 </style>
 </head>
 <body>
-  <a href="./main.html">
-    <img src="./image/naver.png" alt="네이버">
-  </a>
+
+  <p class="brand">한화생명 MSP</p>
+  <h1 class="title">진입 화면을 선택하세요</h1>
+
+  <div class="entry-list">
+    <a class="entry-card" href="./main.html">
+      <span class="entry-icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3l9 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="entry-text">
+        <p class="entry-name">PC 홈</p>
+        <p class="entry-desc">상품 통합전시 캐러셀 · PC 웹 화면</p>
+      </span>
+      <span class="entry-arrow">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+    </a>
+
+    <a class="entry-card" href="./nav_variants.html">
+      <span class="entry-icon">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="5" y="2" width="14" height="20" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M9 19h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </span>
+      <span class="entry-text">
+        <p class="entry-name">App 하단 네비게이션</p>
+        <p class="entry-desc">상품 탭 펼침 모션 3안 비교</p>
+      </span>
+      <span class="entry-arrow">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+    </a>
+  </div>
+
 </body>
 </html>

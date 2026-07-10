@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>하단 네비게이션 모션 3안 비교 — 한화생명 MSP</title>
+<style>
+  :root {
+    --text-body: #272b2f;
+    --text-neutral-1: #908f8e;
+    --surface-neutral: #ffffff;
+    --surface-neutral-2: #f0f0f0;
+    --surface-bg: #f5f5f5;
+    --shadow-large: 0px 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #e5e5e5;
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-body);
+    padding: 48px 24px;
+  }
+
+  .page-title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .page-sub {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-neutral-1);
+    margin: 0 0 36px;
+  }
+
+  .row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 32px;
+    overflow-x: auto;
+    padding-bottom: 24px;
+  }
+
+  .col { flex: none; width: 300px; }
+  .col-label {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .col-label .name { font-size: 15px; font-weight: 700; }
+  .col-label .desc { font-size: 12px; color: var(--text-neutral-1); margin-top: 2px; }
+
+  .phone {
+    position: relative;
+    width: 300px;
+    height: 640px;
+    background: var(--surface-bg);
+    overflow: hidden;
+    box-shadow: 0 20px 44px rgba(0, 0, 0, 0.32);
+    border-radius: 28px;
+    margin: 0 auto;
+  }
+
+  .scroll-area {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    padding-bottom: 100px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .scroll-area::-webkit-scrollbar { width: 0; }
+
+  .full-screen-shot { display: block; width: 100%; height: auto; }
+
+  /* ---------- shared button look ---------- */
+
+  @keyframes iconPop {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.22); }
+    100% { transform: scale(1); }
+  }
+  button.pop svg { animation: iconPop 0.38s cubic-bezier(.34, 1.56, .64, 1); }
+
+  .nav-wrap {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 92px;
+    pointer-events: none;
+  }
+
+  .icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-neutral-1);
+    cursor: pointer;
+    transition: transform 0.12s ease, color 0.18s ease;
+  }
+  .icon-btn:active { transform: scale(0.88); }
+  .icon-btn.active { color: var(--text-body); }
+  .icon-btn svg { width: 22px; height: 22px; display: block; margin: 0 auto 2px; }
+  .icon-btn span.label { font-size: 12px; }
+
+  .nav-default {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: var(--surface-neutral);
+    box-shadow: var(--shadow-large);
+    display: flex;
+    padding: 10px 0 10px;
+    pointer-events: auto;
+  }
+  .nav-default .icon-btn { flex: 1; padding: 4px 4px; }
+
+  .nav-pill-fade {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 92px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,.9) 14%, rgba(255,255,255,.9) 100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .nav-pill {
+    position: absolute;
+    left: 20px; right: 20px; bottom: 10px;
+    background: var(--surface-neutral);
+    border-radius: 1000px;
+    box-shadow: var(--shadow-large);
+    display: flex;
+    align-items: center;
+    padding: 7px 10px;
+    gap: 10px;
+    pointer-events: none;
+  }
+  /* shared: back-btn / categories markup is reused by both the floating
+     pill (variant 1 & 3) and the morph shell's pill layer (variant 2) */
+  .back-btn {
+    width: 36px; height: 36px;
+    border-radius: 100px;
+    background: var(--surface-neutral-2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .back-btn svg { width: 18px; height: 18px; margin: 0; }
+  .categories { position: relative; flex: 1; display: flex; justify-content: space-between; }
+  .categories .icon-btn { position: relative; z-index: 1; flex: 1; padding: 8px 4px 6px; }
+  .cat-indicator {
+    position: absolute;
+    top: 0; left: 0;
+    width: calc(100% / 3);
+    height: 100%;
+    background: var(--surface-neutral-2);
+    border-radius: 1000px;
+    transform: translateX(0%);
+    transition: transform 0.34s cubic-bezier(.34, 1.56, .64, 1);
+    z-index: 0;
+  }
+
+  /* ============ variant 1: 왼쪽 언폴드 (clip-path wipe) ============ */
+
+  .v1 .nav-default {
+    opacity: 1; transform: translateY(0) scale(1);
+    transition: opacity .34s cubic-bezier(.34,1.56,.64,1), transform .34s cubic-bezier(.34,1.56,.64,1);
+  }
+  .v1.open .nav-default {
+    opacity: 0; transform: translateY(6px) scale(.98);
+    transition: opacity .14s ease, transform .14s ease;
+    pointer-events: none;
+  }
+  .v1 .nav-pill-fade { transition: opacity .16s ease; }
+  .v1.open .nav-pill-fade { opacity: 1; transition: opacity .3s ease .05s; }
+  .v1 .nav-pill {
+    clip-path: inset(0 100% 0 0 round 1000px);
+    transition: clip-path .3s cubic-bezier(.4,0,.2,1);
+  }
+  .v1.open .nav-pill {
+    clip-path: inset(0 0 0 0 round 1000px);
+    pointer-events: auto;
+    transition: clip-path .42s cubic-bezier(.34,1.56,.64,1);
+  }
+  .v1 .nav-pill .back-btn .inner,
+  .v1 .nav-pill .categories .icon-btn .inner {
+    opacity: 0; transition: opacity .14s ease;
+  }
+  .v1.open .nav-pill .back-btn .inner { opacity: 1; transition: opacity .3s ease .08s; }
+  .v1.open .nav-pill .categories .icon-btn:nth-of-type(1) .inner { opacity: 1; transition: opacity .3s ease .14s; }
+  .v1.open .nav-pill .categories .icon-btn:nth-of-type(2) .inner { opacity: 1; transition: opacity .3s ease .2s; }
+  .v1.open .nav-pill .categories .icon-btn:nth-of-type(3) .inner { opacity: 1; transition: opacity .3s ease .26s; }
+
+  /* ============ variant 2: 모핑 (하나의 셸이 모양을 바꿈) ============ */
+
+  .v2 .morph-shell {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    top: auto;
+    height: 64px;
+    background: var(--surface-neutral);
+    box-shadow: var(--shadow-large);
+    border-radius: 0px;
+    pointer-events: auto;
+    transition: left .42s cubic-bezier(.65,0,.35,1), right .42s cubic-bezier(.65,0,.35,1),
+                bottom .42s cubic-bezier(.65,0,.35,1), border-radius .42s cubic-bezier(.65,0,.35,1);
+  }
+  .v2.open .morph-shell {
+    left: 20px; right: 20px; bottom: 14px;
+    border-radius: 1000px;
+  }
+  .v2 .layer {
+    position: absolute; inset: 0;
+    display: flex; align-items: center;
+    transition: opacity .2s ease;
+  }
+  .v2 .layer-default { opacity: 1; padding: 0 0; }
+  .v2 .layer-default .icon-btn { flex: 1; padding: 8px 4px; }
+  .v2.open .layer-default { opacity: 0; transition: opacity .16s ease; pointer-events: none; }
+  .v2 .layer-pill {
+    opacity: 0; pointer-events: none;
+    padding: 0 10px; gap: 10px;
+    transition: opacity .18s ease .12s;
+  }
+  .v2.open .layer-pill { opacity: 1; pointer-events: auto; transition: opacity .26s ease .22s; }
+  .v2 .nav-pill-fade { transition: opacity .16s ease; }
+  .v2.open .nav-pill-fade { opacity: 1; transition: opacity .3s ease .1s; }
+
+  /* ============ variant 3: 팝 (스케일 바운스 크로스페이드) ============ */
+
+  .v3 .nav-default {
+    opacity: 1; transform: scale(1);
+    transition: opacity .16s ease, transform .16s ease;
+  }
+  .v3.open .nav-default {
+    opacity: 0; transform: scale(.9);
+    transition: opacity .12s ease, transform .12s ease;
+    pointer-events: none;
+  }
+  .v3 .nav-pill-fade { transition: opacity .14s ease; }
+  .v3.open .nav-pill-fade { opacity: 1; transition: opacity .18s ease; }
+  .v3 .nav-pill {
+    opacity: 0; transform: scale(.82);
+    transition: opacity .14s ease, transform .14s ease;
+  }
+  .v3.open .nav-pill {
+    opacity: 1; transform: scale(1);
+    pointer-events: auto;
+    transition: opacity .3s cubic-bezier(.34,1.56,.64,1) .08s, transform .4s cubic-bezier(.34,1.56,.64,1) .08s;
+  }
+</style>
+</head>
+<body>
+
+<a href="./index.html" style="display:block; text-align:center; font-size:13px; color:var(--text-neutral-1); text-decoration:none; margin-bottom:12px;">← 처음으로</a>
+<h1 class="page-title">하단 네비게이션 · 상품 탭 모션 3안</h1>
+<p class="page-sub">각 폰의 하단 "상품" 탭을 눌러보면 서로 다른 모션으로 펼쳐집니다</p>
+
+<div class="row">
+  <div class="col">
+    <div class="col-label">
+      <div class="name">1안 · 언폴드 (Unfold)</div>
+      <div class="desc">왼쪽(뒤로가기 위치)에서 오른쪽으로 펼쳐짐</div>
+    </div>
+    <div class="phone v1" data-variant="1">
+      <div class="scroll-area">
+        <img class="full-screen-shot" src="./image/nav_variants_screen.png" alt="app screen" />
+      </div>
+      <div class="nav-wrap" data-layout="two-layer"></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="col-label">
+      <div class="name">2안 · 모핑 (Morph)</div>
+      <div class="desc">막대 자체가 알약 모양으로 변형됨</div>
+    </div>
+    <div class="phone v2" data-variant="2">
+      <div class="scroll-area">
+        <img class="full-screen-shot" src="./image/nav_variants_screen.png" alt="app screen" />
+      </div>
+      <div class="nav-wrap" data-layout="morph"></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="col-label">
+      <div class="name">3안 · 팝 (Pop)</div>
+      <div class="desc">바가 사라지고 필이 통통 튀며 등장</div>
+    </div>
+    <div class="phone v3" data-variant="3">
+      <div class="scroll-area">
+        <img class="full-screen-shot" src="./image/nav_variants_screen.png" alt="app screen" />
+      </div>
+      <div class="nav-wrap" data-layout="two-layer"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const ICONS = {
+    home: '<svg viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.7085 2.94249C12.7342 2.07646 11.2661 2.07646 10.2918 2.94249L4.57946 8.0201C3.8475 8.67073 3.42871 9.60331 3.42871 10.5826V17.9993C3.42871 19.4195 4.57998 20.5708 6.00014 20.5708H18.0001C19.4203 20.5708 20.5716 19.4195 20.5716 17.9993V10.5826C20.5716 9.60331 20.1528 8.67073 19.4208 8.0201L13.7085 2.94249ZM11.4307 4.22376C11.7554 3.93509 12.2448 3.93509 12.5696 4.22376L18.2819 9.30137C18.6479 9.62669 18.8573 10.093 18.8573 10.5826V17.9993C18.8573 18.4727 18.4735 18.8565 18.0001 18.8565H12.8573V16.2852C12.8573 15.8118 12.4735 15.428 12.0001 15.428C11.5268 15.428 11.143 15.8118 11.143 16.2852V18.8565H6.00014C5.52675 18.8565 5.143 18.4727 5.143 17.9993V10.5826C5.143 10.093 5.35239 9.62669 5.71837 9.30137L11.4307 4.22376Z" fill="currentColor"/></svg>',
+    profile: '<svg viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0001 2.57227C9.6332 2.57227 7.71443 4.49105 7.71443 6.85798C7.71443 9.22491 9.6332 11.1437 12.0001 11.1437C14.3671 11.1437 16.2859 9.22491 16.2859 6.85798C16.2859 4.49105 14.3671 2.57227 12.0001 2.57227ZM9.42871 6.85798C9.42871 5.43782 10.58 4.28655 12.0001 4.28655C13.4203 4.28655 14.5716 5.43782 14.5716 6.85798C14.5716 8.27814 13.4203 9.42941 12.0001 9.42941C10.58 9.42941 9.42871 8.27814 9.42871 6.85798Z" fill="currentColor"/><path d="M12.0001 12.0008C7.26627 12.0008 3.42871 15.8384 3.42871 20.5723C3.42871 21.0457 3.81247 21.4294 4.28585 21.4294C4.75924 21.4294 5.143 21.0457 5.143 20.5723C5.143 16.7852 8.21304 13.7151 12.0001 13.7151C15.7872 13.7151 18.8573 16.7852 18.8573 20.5723C18.8573 21.0457 19.241 21.4294 19.7144 21.4294C20.1878 21.4294 20.5716 21.0457 20.5716 20.5723C20.5716 15.8384 16.734 12.0008 12.0001 12.0008Z" fill="currentColor"/></svg>',
+    cart: '<svg viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.75921 6.85686C6.30537 6.85686 5.9302 7.21062 5.90354 7.66367L5.24808 18.8065C5.21912 19.2989 5.61057 19.714 6.10375 19.714H17.8961C18.3893 19.714 18.7808 19.2989 18.7518 18.8065L18.0963 7.66367C18.0697 7.21062 17.6945 6.85686 17.2407 6.85686H6.75921ZM4.19222 7.56301C4.27217 6.20385 5.3977 5.14258 6.75921 5.14258H17.2407C18.6022 5.14258 19.7277 6.20385 19.8077 7.56301L20.4631 18.7059C20.55 20.1828 19.3757 21.4283 17.8961 21.4283H6.10375C4.62422 21.4283 3.44987 20.1828 3.53676 18.7059L4.19222 7.56301Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0004 3.42913C11.172 3.42913 10.5004 4.1007 10.5004 4.92913V8.14342C10.5004 8.6168 10.1167 9.00056 9.64328 9.00056C9.16989 9.00056 8.78613 8.6168 8.78613 8.14342V4.92913C8.78613 3.15393 10.2252 1.71484 12.0004 1.71484C13.7756 1.71484 15.2147 3.15393 15.2147 4.92913V8.14342C15.2147 8.6168 14.8309 9.00056 14.3576 9.00056C13.8842 9.00056 13.5004 8.6168 13.5004 8.14342V4.92913C13.5004 4.1007 12.8288 3.42913 12.0004 3.42913Z" fill="currentColor"/></svg>',
+    menu: '<svg viewBox="0 0 24 24" fill="none"><rect x="3.42871" y="4.28516" width="17.1429" height="1.71429" rx="0.857143" fill="currentColor"/><rect x="3.42871" y="11.1426" width="17.1429" height="1.71429" rx="0.857143" fill="currentColor"/><rect x="3.42871" y="18" width="17.1429" height="1.71429" rx="0.857143" fill="currentColor"/></svg>',
+    back: '<svg viewBox="0 0 28 28" fill="none"><path d="M4.5 14H24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 6L4 14L12 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    umbrella: '<svg viewBox="0 0 24 24" fill="none"><path d="M10.1026 23.1428C9.42355 23.1428 8.78612 22.8956 8.30783 22.4468C7.77213 21.9445 7.47017 21.2188 7.43462 20.3483V19.0061H8.60512V20.3547C8.60512 21.2225 9.27694 21.9286 10.1026 21.9286C10.9284 21.9286 11.6002 21.2225 11.6002 20.3547V10.4815L11.2627 10.5385C10.0776 10.7382 9.05893 11.2672 8.31716 12.0685L7.89308 12.5338L7.46813 12.0676C6.49757 11.0265 5.16209 10.4714 3.60598 10.4622C3.57276 10.461 3.53924 10.4607 3.50514 10.4607C2.88608 10.4607 2.15189 10.6393 1.50397 10.797C1.48269 10.8022 1.46141 10.8074 1.44043 10.8124C1.4757 10.6031 1.51679 10.3612 1.5474 10.1798H1.54973L1.59432 9.90078C1.76978 8.8042 2.17258 7.75479 2.79135 6.78196C3.37719 5.86089 4.14052 5.0308 5.06037 4.31434C5.95224 3.61964 6.95254 3.06124 8.03328 2.65446C9.1143 2.24768 10.221 2.01336 11.3227 1.95792L11.6002 1.94383V0H12.7707V1.94413L13.0482 1.95822C14.1502 2.01397 15.2571 2.2483 16.3379 2.65507C17.4186 3.06154 18.4186 3.61994 19.3105 4.31434C20.23 5.03018 20.9934 5.86028 21.5789 6.78134C22.1977 7.75418 22.6005 8.80359 22.7762 9.90047L22.9301 10.8102C22.9103 10.8053 22.8902 10.8007 22.8701 10.7958C22.2193 10.639 21.4813 10.4613 20.866 10.4613C20.8319 10.4613 20.7981 10.4619 20.7649 10.4629C19.2265 10.4733 17.8549 11.0433 16.9024 12.0685L16.4778 12.5344L16.0552 12.0707C15.3023 11.2589 14.2834 10.729 13.1067 10.5364L12.7704 10.4812V20.3486C12.7348 21.2192 12.4332 21.9448 11.8975 22.4471C11.4192 22.8959 10.7818 23.1428 10.1026 23.1428Z" fill="currentColor"/></svg>',
+    chart: '<svg viewBox="0 0 24 24" fill="none"><path d="M2.52539 2.57115C2.52539 2.07217 2.9296 1.66797 3.42857 1.66797C3.92755 1.66797 4.33175 2.07217 4.33175 2.57115V18.3823H21.498C21.997 18.3823 22.4012 18.7865 22.4012 19.2854C22.4012 19.7844 21.997 20.1886 21.498 20.1886H3.42857C2.9296 20.1886 2.52539 19.7844 2.52539 19.2854V2.57115ZM19.4766 6.92969C19.8137 6.56189 20.3852 6.53734 20.7531 6.87444C21.1209 7.2116 21.1463 7.78313 20.8092 8.15095L15.8396 13.5717C15.5256 13.914 15.0033 13.9626 14.6317 13.6839L11.6443 11.4431L7.22963 15.8585C6.87685 16.2113 6.30513 16.2112 5.95229 15.8585C5.59946 15.5057 5.59946 14.934 5.95229 14.5812L10.921 9.61161L10.983 9.55552C11.3016 9.29076 11.765 9.27504 12.1021 9.5279L15.0603 11.7469L19.4766 6.92969Z" fill="currentColor"/></svg>',
+    heart: '<svg viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.57504 6.14818C8.2361 4.80924 6.06524 4.80924 4.7263 6.14818C3.38736 7.48712 3.38736 9.65797 4.7263 10.9969L11.9994 18.27L19.2725 10.9969C20.6114 9.65797 20.6114 7.48712 19.2725 6.14818C18.1003 4.976 16.2887 4.8294 14.9578 5.71116C14.5632 5.97262 14.0313 5.86466 13.7698 5.47002C13.5084 5.07539 13.6163 4.54352 14.011 4.28207C16.0081 2.95891 18.7246 3.17596 20.4847 4.936C22.4931 6.94441 22.4931 10.2007 20.4847 12.2091L12.6055 20.0883C12.4447 20.249 12.2267 20.3393 11.9994 20.3393C11.7721 20.3393 11.5541 20.249 11.3933 20.0883L3.51412 12.2091C1.50571 10.2007 1.50571 6.94441 3.51412 4.936C5.52253 2.92758 8.77881 2.92758 10.7872 4.936L13.5146 7.66341C14.6862 8.83498 14.6862 10.7345 13.5146 11.906C12.3431 13.0776 10.4436 13.0776 9.27199 11.906L7.15067 9.78473C6.81593 9.44999 6.81593 8.90728 7.15067 8.57255C7.4854 8.23781 8.02812 8.23781 8.36285 8.57255L10.4842 10.6939C10.9863 11.196 11.8003 11.196 12.3024 10.6939C12.8046 10.1918 12.8046 9.37769 12.3024 8.87559L9.57504 6.14818Z" fill="currentColor"/></svg>'
+  };
+
+  function defaultTabsHTML() {
+    return `
+      <button class="icon-btn active" data-target="home">${ICONS.home}<span class="label">홈</span></button>
+      <button class="icon-btn" data-target="contract">${ICONS.profile}<span class="label">계약</span></button>
+      <button class="icon-btn tab-product" data-target="product">${ICONS.cart}<span class="label">상품</span></button>
+      <button class="icon-btn" data-target="menu">${ICONS.menu}<span class="label">메뉴</span></button>
+    `;
+  }
+
+  function pillCategoriesHTML(withInnerWrap) {
+    const wrap = (svg, label) => withInnerWrap
+      ? `<span class="inner">${svg}<span class="label">${label}</span></span>`
+      : `${svg}<span class="label">${label}</span>`;
+    return `
+      <span class="cat-indicator"></span>
+      <button class="icon-btn active" data-category="insurance">${wrap(ICONS.umbrella, '보험')}</button>
+      <button class="icon-btn" data-category="finance">${wrap(ICONS.chart, '금융')}</button>
+      <button class="icon-btn" data-category="interest">${wrap(ICONS.heart, '관심')}</button>
+    `;
+  }
+
+  function buildTwoLayer(navWrap) {
+    navWrap.innerHTML = `
+      <div class="nav-pill-fade"></div>
+      <div class="nav-default">${defaultTabsHTML()}</div>
+      <div class="nav-pill">
+        <button class="back-btn"><span class="inner">${ICONS.back}</span></button>
+        <div class="categories">${pillCategoriesHTML(true)}</div>
+      </div>
+    `;
+  }
+
+  function buildMorph(navWrap) {
+    navWrap.innerHTML = `
+      <div class="nav-pill-fade"></div>
+      <div class="morph-shell">
+        <div class="layer layer-default">${defaultTabsHTML()}</div>
+        <div class="layer layer-pill">
+          <button class="back-btn">${ICONS.back}</button>
+          <div class="categories">${pillCategoriesHTML(false)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function wireUp(phone) {
+    const navWrap = phone.querySelector('.nav-wrap');
+    const layout = navWrap.dataset.layout;
+    if (layout === 'morph') buildMorph(navWrap); else buildTwoLayer(navWrap);
+
+    const btnProduct = navWrap.querySelector('.tab-product');
+    const btnBack = navWrap.querySelector('.back-btn');
+    const defaultButtons = Array.from(navWrap.querySelectorAll('.layer-default .icon-btn, .nav-default .icon-btn'));
+    const categoryButtons = Array.from(navWrap.querySelectorAll('.categories .icon-btn'));
+    const catIndicator = navWrap.querySelector('.cat-indicator');
+
+    function pop(btn) {
+      btn.classList.remove('pop');
+      void btn.offsetWidth;
+      btn.classList.add('pop');
+    }
+    function setActive(group, btn) {
+      group.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      pop(btn);
+    }
+
+    btnProduct.addEventListener('click', () => {
+      setActive(defaultButtons, btnProduct);
+      phone.classList.add('open');
+    });
+    btnBack.addEventListener('click', () => {
+      phone.classList.remove('open');
+      setActive(defaultButtons, defaultButtons.find(b => b.dataset.target === 'home'));
+    });
+    defaultButtons.forEach(btn => {
+      if (btn === btnProduct) return;
+      btn.addEventListener('click', () => setActive(defaultButtons, btn));
+    });
+    categoryButtons.forEach((btn, index) => {
+      btn.addEventListener('click', () => {
+        setActive(categoryButtons, btn);
+        catIndicator.style.transform = `translateX(${index * 100}%)`;
+      });
+    });
+  }
+
+  document.querySelectorAll('.phone').forEach(wireUp);
+</script>
+
+</body>
+</html>
